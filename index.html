@@ -1,667 +1,242 @@
 <!DOCTYPE html>
-<html lang="bs">
+<html lang="sr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Ispitivanje toka funkcije</title>
-<meta name="description" content="Unesi funkciju i izaberi šta želiš: domena, nule, asimptote, monotonost, ekstremi, konveksnost, prevojne tačke i interaktivni graf.">
-<script>
-try { var __t = localStorage.getItem('tok-theme'); } catch (e) { var __t = null; }
-if (!__t) __t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-document.documentElement.setAttribute('data-theme', __t);
-</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <style>
-:root{
-  --bg:#f4f6fb; --card:#ffffff; --ink:#1a2033; --mute:#667089; --line:#e2e6f0;
-  --acc:#2f5bea; --acc-soft:#e8eeff; --good:#12805c; --bad:#c2255c; --warn:#b45f06;
-  --grid:#e6e9f2; --axis:#6b748c; --curve:#2f5bea; --d1:#e8590c; --d2:#2b9348; --asy:#c2255c; --max:#d6336c; --min:#1c7ed6; --infl:#7048e8;
-  --shadow:0 1px 2px rgba(20,30,60,.06),0 6px 20px rgba(20,30,60,.06);
-}
-:root[data-theme="dark"]{
-  --bg:#0f1320; --card:#171c2d; --ink:#e8ebf5; --mute:#97a1bb; --line:#262d45;
-  --acc:#7b9bff; --acc-soft:#212a4d; --good:#3ddc97; --bad:#ff6b9a; --warn:#ffb454;
-  --grid:#232a40; --axis:#8a94ae; --curve:#7b9bff; --d1:#ff9a5c; --d2:#5fd68a; --asy:#ff6b9a; --max:#ff6b9a; --min:#5cb2ff; --infl:#b197fc;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
-}
+:root{--bg:#f4f6f8;--card:#fff;--tx:#17202a;--mu:#5d6b7a;--ac:#1d4ed8;--bd:#d5dce4;--c2:#d9480f;--c3:#2b8a3e;--grid:#e3e8ee}
+@media(prefers-color-scheme:dark){:root{--bg:#10151b;--card:#18202a;--tx:#e6ebf1;--mu:#93a1b0;--ac:#74a0ff;--bd:#2a3644;--c2:#ff922b;--c3:#69db7c;--grid:#222d3a}}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px clamp(14px,4vw,40px) 6px;max-width:1280px;margin:0 auto}
-h1{font-size:clamp(20px,3.2vw,28px);margin:0;letter-spacing:-.01em}
-header p{margin:2px 0 0;color:var(--mute);font-size:14px}
-button,input,select{font:inherit;color:inherit}
-.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:10px;cursor:pointer;transition:.15s}
-.btn:hover{border-color:var(--acc);color:var(--acc)}
-.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
-.btn.primary:hover{filter:brightness(1.08);color:#fff}
-.btn.sm{padding:5px 10px;font-size:14px;border-radius:8px}
-main{max-width:1280px;margin:0 auto;padding:8px clamp(14px,4vw,40px) 60px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px}
-.input-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.fx{display:flex;align-items:center;gap:8px;flex:1 1 320px;border:2px solid var(--line);border-radius:12px;padding:4px 12px;background:var(--bg)}
-.fx:focus-within{border-color:var(--acc)}
-.fx label{font-weight:700;color:var(--mute);white-space:nowrap}
-.fx input{flex:1;border:0;background:transparent;outline:0;font-size:20px;padding:8px 0;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.kb,.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.kb button,.chip{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace}
-.kb button:hover,.chip:hover{border-color:var(--acc);color:var(--acc)}
-.lbl{font-size:13px;color:var(--mute);margin-top:12px}
-.err{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(194,37,92,.1);color:var(--bad);border:1px solid rgba(194,37,92,.3)}
-.layout{display:grid;grid-template-columns:300px 1fr;gap:16px;margin-top:16px;align-items:start}
-@media(max-width:900px){.layout{grid-template-columns:1fr}}
-.opts{position:sticky;top:12px}
-@media(max-width:900px){.opts{position:static}}
-.opts h2,.sec h2{font-size:17px;margin:0 0 10px}
-.preset{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.preset button{padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--acc-soft);color:var(--acc);cursor:pointer;font-size:13px;font-weight:600}
-.preset button:hover{border-color:var(--acc)}
-.check{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:10px;cursor:pointer;user-select:none}
-.check:hover{background:var(--bg)}
-.check input{margin-top:4px;accent-color:var(--acc);width:17px;height:17px;flex:none}
-.check small{display:block;color:var(--mute);font-size:12.5px;line-height:1.3}
-.opts hr{border:0;border-top:1px solid var(--line);margin:12px 0}
-.opts .sub{font-size:13px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;margin:4px 0 6px}
-.slider{display:flex;align-items:center;gap:10px;padding:4px 8px;font-size:14px}
-.slider input[type=range]{flex:1;accent-color:var(--acc)}
-.out{display:grid;gap:16px;min-width:0}
-.sec p{margin:6px 0}
-.sec ul{margin:6px 0 6px 0;padding-left:20px}
-.sec li{margin:3px 0}
-.mute{color:var(--mute)}
-.ans{background:var(--acc-soft);border-radius:10px;padding:8px 12px;margin:8px 0;border-left:4px solid var(--acc)}
-.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:700;margin-right:6px;vertical-align:1px}
-.tag.max{background:rgba(214,51,108,.14);color:var(--max)} .tag.min{background:rgba(28,126,214,.14);color:var(--min)}
-.tag.inf{background:rgba(112,72,232,.14);color:var(--infl)} .tag.asy{background:rgba(194,37,92,.12);color:var(--asy)}
-.tag.neu{background:var(--bg);color:var(--mute);border:1px solid var(--line)}
-.graphwrap{position:relative}
-canvas#cv{width:100%;height:min(62vh,520px);min-height:320px;display:block;border-radius:12px;background:var(--card);touch-action:none;cursor:grab;border:1px solid var(--line)}
-canvas#cv:active{cursor:grabbing}
-.gtools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.gtools label{font-size:13px;color:var(--mute);display:flex;align-items:center;gap:5px}
-.gtools input[type=number]{width:84px;padding:5px 7px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin-top:8px;color:var(--mute)}
-.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
-#hover{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--mute);min-height:20px;margin-top:6px}
-.tablewrap{overflow-x:auto;margin-top:6px}
-table.tok{border-collapse:collapse;font-size:14px;min-width:100%}
-table.tok th,table.tok td{border:1px solid var(--line);padding:6px 10px;text-align:center;white-space:nowrap}
-table.tok th{background:var(--bg);text-align:left;position:sticky;left:0}
-table.tok td.pt{background:var(--bg);font-weight:600}
-.pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
-.foot{color:var(--mute);font-size:13px;margin-top:22px;text-align:center}
-.tx .katex{font-size:1.08em}
-.loading{opacity:.55;pointer-events:none}
-details{margin-top:12px}
-summary{cursor:pointer;color:var(--mute);font-size:14px}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:880px;margin:auto;padding:16px}
+h1{font:700 1.7rem/1.2 Georgia,serif;margin:8px 0 16px}
+h2{font:700 1.05rem Georgia,serif;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px}
+.card p{margin:0;overflow-wrap:anywhere}
+input[type=text],input[type=number]{width:100%;font:inherit;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx)}
+#fx{font:1.15rem ui-monospace,Menlo,monospace}
+.hint{color:var(--mu);font-size:.85rem;margin-top:6px}
+#err{color:#e03131;min-height:1.2em;margin-top:6px;font-size:.9rem}
+.sw{display:flex;align-items:center;gap:12px;padding:7px 0;cursor:pointer}
+.sw input{position:absolute;opacity:0}
+.sw span{flex:none;width:44px;height:24px;border-radius:12px;background:var(--bd);position:relative;transition:background .15s}
+.sw span::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw input:checked+span{background:var(--ac)}
+.sw input:checked+span::after{transform:translateX(20px)}
+.sw input:focus-visible+span{outline:2px solid var(--ac);outline-offset:2px}
+button{font:inherit;font-weight:600;padding:9px 14px;border:0;border-radius:8px;background:var(--ac);color:#fff;cursor:pointer;margin-top:8px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.g label{font-size:.85rem;color:var(--mu)}
+.ck{display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:.92rem}
+canvas{width:100%;height:340px;display:block;border:1px solid var(--bd);border-radius:10px;background:var(--card);margin-top:10px;touch-action:pan-y}
+.m{font:.92rem ui-monospace,Menlo,monospace}
+.k{color:var(--mu)}
 </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>Ispitivanje toka funkcije</h1>
-    <p>Unesi funkciju, izaberi šta želiš da se uradi i dobij rješenje i graf.</p>
-  </div>
-  <button class="btn sm" id="theme" title="Svijetla / tamna tema">🌓 Tema</button>
-</header>
-
 <main>
-  <section class="card">
-    <div class="input-row">
-      <div class="fx"><label for="fx">f(x) =</label>
-        <input id="fx" type="text" value="(x^2+1)/(x-1)" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Funkcija f(x)">
-      </div>
-      <button class="btn primary" id="go">Riješi</button>
-    </div>
-    <div class="kb" id="kb"></div>
-    <div class="lbl">Primjeri:</div>
-    <div class="chips" id="examples"></div>
-    <div class="err" id="err" hidden></div>
-    <details>
-      <summary>Kako pisati funkciju?</summary>
-      <div class="mute" style="font-size:14px;margin-top:6px">
-        Stepen: <code>x^2</code>, korijen: <code>sqrt(x)</code> ili <code>cbrt(x)</code>, apsolutna vrijednost: <code>abs(x)</code> ili <code>|x|</code>,
-        eksponent: <code>e^x</code> ili <code>exp(x)</code>, prirodni logaritam: <code>ln(x)</code>, logaritam sa bazom 10: <code>log10(x)</code>,
-        trigonometrija: <code>sin cos tan</code> (u radijanima, <code>tg ctg</code> također rade), inverzne: <code>asin acos atan</code>, broj π: <code>pi</code>.<br>
-        Množenje piši jasno, npr. <code>(1/2)*x</code>, a ne <code>1/2x</code>. Razlomke s više članova stavi u zagrade: <code>(x^2-1)/(x+2)</code>.
-      </div>
-    </details>
-  </section>
+<h1>Ispitivanje toka funkcije</h1>
 
-  <div class="layout">
-    <aside class="card opts" id="opts">
-      <h2>Šta da uradim?</h2>
-      <div class="preset" id="presets">
-        <button data-p="all">Kompletan tok</button>
-        <button data-p="mono">Samo monotonost</button>
-        <button data-p="asym">Samo asimptote</button>
-        <button data-p="graph">Samo graf</button>
-        <button data-p="none">Ništa</button>
-      </div>
-      <label class="check"><input type="checkbox" id="o-domain" checked><span>Domena<small>skup na kojem je funkcija definisana</small></span></label>
-      <label class="check"><input type="checkbox" id="o-zeros" checked><span>Nule i presjek s y-osom<small>i znak funkcije</small></span></label>
-      <label class="check"><input type="checkbox" id="o-parity" checked><span>Parnost i periodičnost</span></label>
-      <label class="check"><input type="checkbox" id="o-limits" checked><span>Granične vrijednosti i asimptote<small>vertikalne, horizontalne, kose</small></span></label>
-      <label class="check"><input type="checkbox" id="o-mono" checked><span>Monotonost i ekstremi<small>prvi izvod f′</small></span></label>
-      <label class="check"><input type="checkbox" id="o-conv" checked><span>Konveksnost i prevojne tačke<small>drugi izvod f″</small></span></label>
-      <label class="check"><input type="checkbox" id="o-table" checked><span>Tabela toka</span></label>
-      <label class="check"><input type="checkbox" id="o-graph" checked><span>Nacrtaj graf</span></label>
-      <hr>
-      <div class="sub">Izgled grafa</div>
-      <label class="check"><input type="checkbox" id="g-grid" checked><span>Mreža</span></label>
-      <label class="check"><input type="checkbox" id="g-asy" checked><span>Asimptote</span></label>
-      <label class="check"><input type="checkbox" id="g-pts" checked><span>Nule, ekstremi, prevoji</span></label>
-      <label class="check"><input type="checkbox" id="g-lbl" checked><span>Oznake koordinata</span></label>
-      <label class="check"><input type="checkbox" id="g-d1"><span>Prikaži f′(x)</span></label>
-      <label class="check"><input type="checkbox" id="g-d2"><span>Prikaži f″(x)</span></label>
-      <div class="slider"><span>Linija</span><input type="range" id="g-lw" min="1" max="6" step="0.5" value="2.5"><span id="g-lwv">2,5</span></div>
-    </aside>
+<section class="card">
+  <h2>Funkcija</h2>
+  <label for="fx" class="k">f(x) =</label>
+  <input id="fx" type="text" value="(x^2-1)/(x-2)" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div id="err"></div>
+  <div class="hint">Primjeri: x^3-3x · 1/(x-1) · sin(x)/x · ln(x) · sqrt(x) · e^x · tan(x) · abs(x) · x*e^(-x). Znak * nije obavezan (2x, 3sin(x)).</div>
+</section>
 
-    <div class="out">
-      <section class="card" id="graphCard">
-        <h2 style="font-size:17px;margin:0 0 10px">Graf</h2>
-        <div class="graphwrap"><canvas id="cv" aria-label="Graf funkcije"></canvas></div>
-        <div id="hover">&nbsp;</div>
-        <div class="legend" id="legend"></div>
-        <div class="gtools">
-          <button class="btn sm" id="zin">＋</button><button class="btn sm" id="zout">－</button>
-          <button class="btn sm" id="reset">Početni prikaz</button>
-          <button class="btn sm" id="png">Spremi PNG</button>
-          <label>x od <input type="number" id="xmin" step="any"></label>
-          <label>do <input type="number" id="xmax" step="any"></label>
-          <label>y od <input type="number" id="ymin" step="any"></label>
-          <label>do <input type="number" id="ymax" step="any"></label>
-          <label><input type="checkbox" id="autoy" checked> y automatski</label>
-        </div>
-        <div class="mute" style="font-size:12.5px;margin-top:6px">Povuci mišem/prstom za pomjeranje, kotačić ili dva prsta za zumiranje, dvoklik za početni prikaz.</div>
-      </section>
-      <div id="sections" class="out"></div>
-      <div class="foot">Rezultati se računaju numerički uz prepoznavanje tačnih vrijednosti (razlomci, π, korijeni, e, ln). Za složenije funkcije provjeri rezultat.</div>
-    </div>
+<section class="card">
+  <h2>Šta da uradim?</h2>
+  <label class="sw"><input type="checkbox" id="o1" checked><span></span>Domen, nule, parnost</label>
+  <label class="sw"><input type="checkbox" id="o2" checked><span></span>Monotonost i ekstremi</label>
+  <label class="sw"><input type="checkbox" id="o3"><span></span>Konveksnost i prevojne tačke</label>
+  <label class="sw"><input type="checkbox" id="o4" checked><span></span>Asimptote</label>
+  <button id="all" type="button">Cijeli tok funkcije</button>
+</section>
+
+<section class="card">
+  <h2>Graf</h2>
+  <div class="g">
+    <div><label for="ax">x od</label><input id="ax" type="number" value="-10" step="any"></div>
+    <div><label for="bx">x do</label><input id="bx" type="number" value="10" step="any"></div>
+    <div><label for="ay">y od (prazno = automatski)</label><input id="ay" type="number" step="any"></div>
+    <div><label for="by">y do (prazno = automatski)</label><input id="by" type="number" step="any"></div>
   </div>
+  <label class="ck"><input type="checkbox" id="d1"> prikaži f′(x)</label>
+  <label class="ck"><input type="checkbox" id="d2"> prikaži f″(x)</label>
+  <canvas id="cv"></canvas>
+  <div class="hint">Linija f(x) je plava, f′ narandžasta, f″ zelena. Isprekidane linije su asimptote.</div>
+</section>
+
+<div id="out"></div>
+<p class="hint">Analiza je numerička i traži karakteristične tačke na intervalu [−50, 50] (ili širem ako je graf širi); izvodi se računaju simbolički.</p>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/mathjs@13.2.0/lib/browser/math.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script>
-//@@ENGINE@@
-</script>
-<script>
-/* ===================== UI ===================== */
-(function () {
-  'use strict';
-  const $ = id => document.getElementById(id);
-  const MINUS = '−';
-  const E = Engine;
-  let model = null, R = null, src = '';
-  const view = { xmin: -6, xmax: 6, ymin: -6, ymax: 6 };
-
-  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  const nz = (x, tol) => E.nice(x, tol || 1e-9);
-
-  /* ---------- tipkovnica i primjeri ---------- */
-  const KEYS = [['x', 'x'], ['x²', '^2'], ['xⁿ', '^'], ['( )', '()'], ['/', '/'], ['√', 'sqrt('], ['|x|', 'abs('], ['π', 'pi'], ['e', 'e'], ['eˣ', 'e^'], ['ln', 'ln('], ['sin', 'sin('], ['cos', 'cos('], ['tan', 'tan('], ['asin', 'asin('], ['atan', 'atan(']];
-  KEYS.forEach(([lab, ins]) => {
-    const b = document.createElement('button'); b.type = 'button'; b.textContent = lab;
-    b.addEventListener('click', () => {
-      const inp = $('fx'); inp.focus();
-      const s = inp.selectionStart, e = inp.selectionEnd;
-      if (ins === '()') { inp.setRangeText('(' + inp.value.slice(s, e) + ')', s, e, 'end'); inp.setSelectionRange(e + 1 - (s === e ? 1 : 0), e + 1 - (s === e ? 1 : 0)); if (s !== e) inp.setSelectionRange(e + 2, e + 2); }
-      else { inp.setRangeText(ins, s, e, 'end'); }
-    });
-    $('kb').appendChild(b);
-  });
-  ['x^3-3x', '(x^2+1)/(x-1)', '(x^2-4)/(x^2-1)', 'x*e^(-x)', 'ln(x)/x', 'sqrt(x^2-1)', 'x^(1/3)', 'abs(x)-x^2', 'sin(x)+cos(x)', 'tan(x)', 'x/(x^2+1)', 'x^3/(x^2-1)', 'e^(-x^2)', 'x*ln(x)'].forEach(t => {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = t;
-    b.addEventListener('click', () => { $('fx').value = t; solve(); });
-    $('examples').appendChild(b);
-  });
-
-  /* ---------- opcije ---------- */
-  const SECS = ['domain', 'zeros', 'parity', 'limits', 'mono', 'conv', 'table', 'graph'];
-  const opt = k => $('o-' + k).checked;
-  const PRESETS = {
-    all: { domain: 1, zeros: 1, parity: 1, limits: 1, mono: 1, conv: 1, table: 1, graph: 1 },
-    mono: { domain: 1, mono: 1, graph: 1 },
-    asym: { domain: 1, limits: 1, graph: 1 },
-    graph: { graph: 1 },
-    none: {}
-  };
-  $('presets').addEventListener('click', e => {
-    const p = e.target.getAttribute && e.target.getAttribute('data-p'); if (!p) return;
-    SECS.forEach(k => { $('o-' + k).checked = !!PRESETS[p][k]; });
-    renderAll();
-  });
-  document.querySelectorAll('#opts input').forEach(el => el.addEventListener('input', () => {
-    if (el.id === 'g-lw') $('g-lwv').textContent = String(el.value).replace('.', ',');
-    if (el.id.startsWith('o-')) renderAll(); else draw();
-  }));
-  $('theme').addEventListener('click', () => {
-    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', t);
-    try { localStorage.setItem('tok-theme', t); } catch (e) { }
-    draw();
-  });
-
-  /* ---------- rješavanje ---------- */
-  function showErr(msg) { const e = $('err'); if (msg) { e.textContent = msg; e.hidden = false; } else e.hidden = true; }
-  function solve() {
-    src = $('fx').value.trim();
-    showErr('');
-    if (typeof math === 'undefined') { showErr('Biblioteka math.js se nije učitala. Provjeri internet vezu i osvježi stranicu.'); return; }
-    if (!src) { showErr('Upiši funkciju, npr. x^3 - 3x'); return; }
-    $('sections').classList.add('loading');
-    setTimeout(() => {
-      try {
-        model = E.buildModel(math, src);
-        R = E.analyze(model);
-        if (R.error) throw new Error(R.error);
-        try { history.replaceState(null, '', '#f=' + encodeURIComponent(src)); } catch (e) { }
-        defaultView();
-      } catch (e) {
-        model = null; R = null;
-        showErr(e.message || String(e));
-      }
-      $('sections').classList.remove('loading');
-      renderAll();
-    }, 15);
-  }
-  $('go').addEventListener('click', solve);
-  $('fx').addEventListener('keydown', e => { if (e.key === 'Enter') solve(); });
-
-  /* ---------- ispis ---------- */
-  const ivs = (list, pred) => list.filter(pred).map(m => E.ivText(m.a, m.b, false, false)).join(' ∪ ') || '—';
-  const lim = l => l.kind === 'finite' ? nz(l.L, 1e-6).text : l.kind === 'inf' ? (l.s > 0 ? '+' : MINUS) + '∞' : l.kind === 'undef' ? 'nije definisana' : 'ne postoji';
-  const texSpan = (tex, str) => '<span class="tx" data-tex="' + esc(tex) + '" data-str="' + esc(str) + '"></span>';
-  const sec = (key, title, body) => '<section class="card sec" id="sec-' + key + '"><h2>' + title + '</h2>' + body + '</section>';
-  const ans = t => '<div class="ans">' + t + '</div>';
-  const sgnTxt = s => s > 0 ? '<span class="pos">+</span>' : s < 0 ? '<span class="neg">' + MINUS + '</span>' : s === 0 ? '0' : '—';
-  const pyT = x => (x === Infinity ? '+∞' : x === -Infinity ? MINUS + '∞' : nz(x, 1e-9).text);
-  const tT = () => R.period ? nz(R.period, 1e-9).text : '';
-
-  function secDomain() {
-    let h = ans('D<sub>f</sub> = ' + esc(R.domainText));
-    if (R.constant) h = ans('Funkcija je konstantna: f(x) = ' + esc(R.constant.text) + ' za svako x ∈ ℝ');
-    return sec('domain', 'Domena', h);
-  }
-  function secZeros() {
-    if (R.constant) return sec('zeros', 'Nule i znak', '<p>' + (R.constant.v === 0 ? 'f(x) = 0 za svako x.' : 'Konstantna funkcija nema nula.') + '</p>');
-    let h = '';
-    if (R.zeros.length) h += '<p><b>Nule</b> (f(x) = 0): ' + R.zeros.map(z => 'x = ' + esc(z.nice.text)).join('; ') + (R.period ? '; te sve tačke oblika x + k·' + esc(tT()) : '') + '</p>';
-    else h += '<p><b>Nule:</b> funkcija nema realnih nula.</p>';
-    h += '<p><b>Presjek s y-osom:</b> ' + (R.yint.ok ? '(0, ' + esc(R.yint.y.text) + ')' : 'f(0) nije definisano, nema presjeka s y-osom.') + '</p>';
-    const pos = ivs(R.signs, m => m.s > 0), neg = ivs(R.signs, m => m.s < 0);
-    h += '<p><b>Znak:</b> f(x) &gt; 0 za x ∈ ' + esc(pos) + '; f(x) &lt; 0 za x ∈ ' + esc(neg) + (R.period ? ' (na jednoj periodi)' : '') + '</p>';
-    return sec('zeros', 'Nule i znak funkcije', h);
-  }
-  function secParity() {
-    let h = '';
-    const k = R.parity.kind;
-    if (k === 'even') h += ans('Parna: f(−x) = f(x). Graf je simetričan u odnosu na y-osu.');
-    else if (k === 'odd') h += ans('Neparna: f(−x) = −f(x). Graf je simetričan u odnosu na koordinatni početak.');
-    else h += ans('Nije ni parna ni neparna' + (R.parity.why ? ' (' + esc(R.parity.why) + ')' : '') + '.');
-    h += R.period ? '<p><b>Periodičnost:</b> periodična, osnovni period T = ' + esc(tT()) + '. Dovoljno je ispitati jednu periodu.</p>' : '<p><b>Periodičnost:</b> nije periodična (ili period nije prepoznat).</p>';
-    return sec('parity', 'Parnost i periodičnost', h);
-  }
-  function secLimits() {
-    if (R.constant) return sec('limits', 'Asimptote', '<p>Konstantna funkcija: horizontalna asimptota je y = ' + esc(R.constant.text) + '.</p>');
-    let h = '';
-    const L = [];
-    if (!R.periodic) {
-      if (R.tails.neg) L.push('lim<sub>x→−∞</sub> f(x) = ' + esc(lim(R.tails.neg)));
-      if (R.tails.pos) L.push('lim<sub>x→+∞</sub> f(x) = ' + esc(lim(R.tails.pos)));
-    } else h += '<p class="mute">Periodična funkcija: granice u ±∞ ne postoje, pa nema horizontalnih ni kosih asimptota.</p>';
-    R.specials.forEach(s => {
-      const c = nz(s.x, 1e-9).text;
-      if (s.L.kind !== 'undef') L.push('lim<sub>x→' + esc(c) + '⁻</sub> f(x) = ' + esc(lim(s.L)));
-      if (s.R.kind !== 'undef') L.push('lim<sub>x→' + esc(c) + '⁺</sub> f(x) = ' + esc(lim(s.R)));
-    });
-    if (L.length) h += '<p><b>Granične vrijednosti:</b></p><ul>' + L.map(x => '<li>' + x + '</li>').join('') + '</ul>';
-    const add = (t, arr) => { h += '<p><span class="tag asy">' + t + '</span>' + (arr.length ? arr.join('; ') : 'nema') + '</p>'; };
-    add('Vertikalne', R.vertical.map(s => 'x = ' + esc(nz(s.x, 1e-9).text)));
-    if (R.periodic && R.vertical.length) h += '<p class="mute">i sve tačke oblika x + k·' + esc(tT()) + '.</p>';
-    const side = s => s === 'both' ? '' : s === 'neg' ? ' (kad x→' + MINUS + '∞)' : ' (kad x→+∞)';
-    add('Horizontalne', R.horizontal.map(a => 'y = ' + esc(a.L.text) + side(a.side)));
-    add('Kose', R.slant.map(a => esc(slantTxt(a)) + side(a.side)));
-    const other = R.specials.filter(s => s.type === 'removable' || s.type === 'jump' || s.type === 'endpoint');
-    if (other.length) {
-      h += '<p><b>Ostale posebne tačke:</b></p><ul>' + other.map(s => {
-        const c = esc(nz(s.x, 1e-9).text);
-        if (s.type === 'removable') return '<li>x = ' + c + ': prividni prekid (rupa), f → ' + esc(nz(s.lim, 1e-6).text) + '</li>';
-        if (s.type === 'jump') return '<li>x = ' + c + ': prekid sa skokom</li>';
-        return '<li>x = ' + c + ': granica domene' + (s.fvalid ? ', f(' + c + ') = ' + esc(nz(s.fv, 1e-8).text) : '') + '</li>';
-      }).join('') + '</ul>';
-    }
-    return sec('limits', 'Granične vrijednosti i asimptote', h);
-  }
-  function slantTxt(a) {
-    const k = a.k, n = a.n;
-    const kt = k.v === 1 ? 'x' : k.v === -1 ? MINUS + 'x' : k.text + 'x';
-    if (n.v === 0) return 'y = ' + kt;
-    return 'y = ' + kt + (n.v < 0 ? ' ' + MINUS + ' ' + n.text.replace(MINUS, '') : ' + ' + n.text);
-  }
-  function derivLine(name, tex, str) {
-    return tex ? '<p>' + texSpan(name + '=' + tex, name + ' = ' + str) + '</p>' : '<p class="mute">Izvod je računat numerički (simbolički oblik nije dostupan).</p>';
-  }
-  function secMono() {
-    if (R.constant) return sec('mono', 'Monotonost', '<p>Konstantna funkcija: f′(x) = 0, nije ni rastuća ni opadajuća.</p>');
-    let h = derivLine("f'(x)", model.tex.d1, model.str.d1);
-    const cr = R.crit;
-    if (cr.length) {
-      h += '<p><b>Kritične tačke:</b></p><ul>' + cr.map(c => {
-        const t = c.type === 'max' ? '<span class="tag max">lokalni maksimum</span>' : c.type === 'min' ? '<span class="tag min">lokalni minimum</span>' : '<span class="tag neu">nije ekstrem</span>';
-        const d = c.k === 'corner' ? 'f′ ne postoji' : 'f′(x) = 0';
-        return '<li>x = ' + esc(c.nice.text) + ' (' + d + '): ' + t + ' f = ' + esc(c.ynice.text) + '</li>';
-      }).join('') + '</ul>';
-    } else h += '<p><b>Kritične tačke:</b> nema (f′ nema nula).</p>';
-    const inc = ivs(R.mono, m => m.s > 0), dec = ivs(R.mono, m => m.s < 0);
-    h += ans('f raste na: ' + esc(inc) + '<br>f opada na: ' + esc(dec) + (R.period ? '<br><span class="mute">(na jednoj periodi, zatim se ponavlja)</span>' : ''));
-    if (R.extrema.length) h += '<p><b>Ekstremi:</b> ' + R.extrema.map(e => (e.type === 'max' ? 'maksimum' : 'minimum') + ' (' + esc(e.xn.text) + ', ' + esc(e.yn.text) + ')').join('; ') + '</p>';
-    else h += '<p><b>Ekstremi:</b> funkcija nema lokalnih ekstrema.</p>';
-    if (R.truncated) h += '<p class="mute">Funkcija ima vrlo mnogo nula i ekstrema; prikazano je za x ∈ [' + MINUS + R.truncated + ', ' + R.truncated + '].</p>';
-    return sec('mono', 'Monotonost i ekstremi', h);
-  }
-  function secConv() {
-    if (R.constant) return sec('conv', 'Konveksnost', '<p>Konstantna funkcija je i konveksna i konkavna (f″ = 0).</p>');
-    let h = derivLine("f''(x)", model.tex.d2, model.str.d2);
-    const cv1 = ivs(R.conv, m => m.s > 0), cc = ivs(R.conv, m => m.s < 0), fl = ivs(R.conv, m => m.s === 0);
-    h += ans('Konveksna (∪, f″ &gt; 0): ' + esc(cv1) + '<br>Konkavna (∩, f″ &lt; 0): ' + esc(cc) + (fl !== '—' ? '<br>Linearna (f″ = 0): ' + esc(fl) : ''));
-    if (R.infl.length) h += '<p><b>Prevojne tačke:</b> ' + R.infl.map(p => '<span class="tag inf">prevoj</span>(' + esc(p.xn.text) + ', ' + esc(p.yn.text) + ')' + (p.vertical ? ' (vertikalna tangenta)' : '')).join('; ') + '</p>';
-    else h += '<p><b>Prevojne tačke:</b> nema.</p>';
-    return sec('conv', 'Konveksnost i prevojne tačke', h);
-  }
-  function secTable() {
-    if (!R.table) return '';
-    const cells = R.table;
-    let r0 = '<tr><th>x</th>', r1 = '<tr><th>f′(x)</th>', r2 = '<tr><th>f″(x)</th>', r3 = '<tr><th>f(x)</th>';
-    cells.forEach(c => {
-      if (c.t === 'int') {
-        const txt = E.ivText(c.a, c.b, false, false);
-        r0 += '<td>' + esc(txt) + '</td>';
-        if (c.s1 === null) { r1 += '<td>—</td>'; r2 += '<td>—</td>'; r3 += '<td class="mute">nije def.</td>'; }
-        else {
-          r1 += '<td>' + sgnTxt(c.s1) + '</td>'; r2 += '<td>' + sgnTxt(c.s2) + '</td>';
-          const ar = c.s1 > 0 ? '↗' : c.s1 < 0 ? '↘' : '→';
-          const cc = c.s2 > 0 ? ' ∪' : c.s2 < 0 ? ' ∩' : '';
-          r3 += '<td style="font-size:18px">' + ar + cc + '</td>';
-        }
-      } else {
-        r0 += '<td class="pt">' + esc(c.xt) + '</td>';
-        r1 += '<td class="pt">' + esc(c.d1 || '') + '</td>'; r2 += '<td class="pt">' + esc(c.d2 || '') + '</td>';
-        r3 += '<td class="pt">' + esc(c.fy) + '</td>';
-      }
-    });
-    const tb = '<div class="tablewrap"><table class="tok">' + r0 + '</tr>' + r1 + '</tr>' + r2 + '</tr>' + r3 + '</tr></table></div>';
-    return sec('table', 'Tabela toka', tb + '<p class="mute" style="font-size:13px">↗ raste, ↘ opada, ∪ konveksna, ∩ konkavna, ∄ ne postoji.' + (R.period ? ' Prikazana je jedna perioda.' : '') + '</p>');
-  }
-
-  function renderAll() {
-    const box = $('sections');
-    $('graphCard').hidden = !opt('graph');
-    if (!R || !model) { box.innerHTML = ''; draw(); return; }
-    let h = '';
-    const head = '<section class="card sec"><h2>Funkcija</h2><p style="font-size:18px">' + (model.tex.f ? texSpan('f(x)=' + model.tex.f, 'f(x) = ' + model.str.f) : esc('f(x) = ' + model.str.f)) + '</p></section>';
-    h += head;
-    if (opt('domain')) h += secDomain();
-    if (opt('zeros')) h += secZeros();
-    if (opt('parity')) h += secParity();
-    if (opt('limits')) h += secLimits();
-    if (opt('mono')) h += secMono();
-    if (opt('conv')) h += secConv();
-    if (opt('table')) h += secTable();
-    box.innerHTML = h;
-    box.querySelectorAll('.tx').forEach(el => {
-      try { if (window.katex) katex.render(el.getAttribute('data-tex'), el, { throwOnError: false }); else el.textContent = el.getAttribute('data-str'); }
-      catch (e) { el.textContent = el.getAttribute('data-str'); }
-    });
-    if (opt('graph')) requestAnimationFrame(() => { resize(); });
-  }
-
-  /* ===================== GRAF ===================== */
-  const cv = $('cv'), ctx = cv.getContext('2d');
-  let CW = 0, CH = 0, dpr = 1;
-  const X = x => (x - view.xmin) / (view.xmax - view.xmin) * CW;
-  const Y = y => CH - (y - view.ymin) / (view.ymax - view.ymin) * CH;
-  const invX = px => view.xmin + px / CW * (view.xmax - view.xmin);
-  const invY = py => view.ymin + (CH - py) / CH * (view.ymax - view.ymin);
-  const clampPy = v => Math.max(-2 * CH, Math.min(3 * CH, v));
-
-  function resize() {
-    const r = cv.getBoundingClientRect();
-    if (!r.width) return;
-    dpr = window.devicePixelRatio || 1; CW = r.width; CH = r.height;
-    cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr);
-    draw();
-  }
-  if (window.ResizeObserver) new ResizeObserver(resize).observe(cv); else window.addEventListener('resize', resize);
-
-  function niceStep(raw) {
-    const p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
-    return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p;
-  }
-  const tickTxt = v => { if (Math.abs(v) < 1e-12) return '0'; const s = E.fmtNum(v, 4); return s; };
-
-  function syncInputs() {
-    $('xmin').value = +view.xmin.toPrecision(6); $('xmax').value = +view.xmax.toPrecision(6);
-    $('ymin').value = +view.ymin.toPrecision(6); $('ymax').value = +view.ymax.toPrecision(6);
-  }
-
-  function defaultView() {
-    let lo = 0, hi = 0, any = false;
-    const take = x => { if (isFinite(x) && Math.abs(x) < 1e4) { lo = Math.min(lo, x); hi = Math.max(hi, x); any = true; } };
-    R.zeros.forEach(z => take(z.x)); R.crit.forEach(c => take(c.x)); R.infl.forEach(p => take(p.x));
-    R.specials.forEach(s => take(s.x));
-    if (R.domain) R.domain.forEach(d => { take(d.a); take(d.b); });
-    if (R.periodic) { lo = -R.period * 0.25; hi = R.period * 1.25; }
-    else {
-      let span = hi - lo;
-      if (!any || span < 4) { const m = (hi + lo) / 2; lo = m - 3; hi = m + 3; span = 6; }
-      const pad = Math.max(1.2, span * 0.35);
-      lo -= pad; hi += pad;
-      // ločno simetričan pogled ako je pravilno
-      if (lo > -1) lo = -1; if (hi < 1) hi = 1;
-    }
-    view.xmin = lo; view.xmax = hi;
-    $('autoy').checked = true;
-    autoY();
-    syncInputs();
-  }
-
-  function autoY() {
-    if (!model) return;
-    const f = model.f, ys = [];
-    const N = 700;
-    for (let i = 0; i <= N; i++) { const y = f(view.xmin + (view.xmax - view.xmin) * i / N); if (isFinite(y) && Math.abs(y) < 1e7) ys.push(y); }
-    if (R) {
-      if (R.points.yint) ys.push(R.points.yint.y);
-      R.crit.forEach(c => { if (isFinite(c.y) && c.x >= view.xmin && c.x <= view.xmax) ys.push(c.y); });
-      R.infl.forEach(p => { if (isFinite(p.y) && p.x >= view.xmin && p.x <= view.xmax) ys.push(p.y); });
-    }
-    if (ys.length < 2) { view.ymin = -5; view.ymax = 5; return; }
-    ys.sort((a, b) => a - b);
-    const q = p => ys[Math.min(ys.length - 1, Math.max(0, Math.floor(p * (ys.length - 1))))];
-    let a = q(0.03), b = q(0.97);
-    // ako su ekstremi znacajni, ukljuci ih
-    if (R) R.crit.forEach(c => { if (isFinite(c.y) && c.x >= view.xmin && c.x <= view.xmax) { a = Math.min(a, c.y); b = Math.max(b, c.y); } });
-    if (b - a < 1e-6) { a -= 1; b += 1; }
-    const pad = (b - a) * 0.15;
-    view.ymin = a - pad; view.ymax = b + pad;
-    // da osa x ostane vidljiva ako je blizu
-    if (view.ymin > 0 && view.ymin < (b - a) * 0.6) view.ymin = -(b - a) * 0.08;
-    if (view.ymax < 0 && -view.ymax < (b - a) * 0.6) view.ymax = (b - a) * 0.08;
-  }
-
-  function plot(fn, color, lw, dash, brk) {
-    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash || []); ctx.lineJoin = 'round';
-    const N = Math.max(300, Math.floor(CW * 1.5));
-    let pen = false, py0 = 0, xPrev = 0;
-    for (let i = 0; i <= N; i++) {
-      const x = view.xmin + (view.xmax - view.xmin) * i / N;
-      const y = fn(x);
-      if (!isFinite(y)) { pen = false; continue; }
-      const py = Y(y), px = X(x);
-      if (pen) {
-        let cut = Math.abs(py - py0) > CH * 3;
-        if (!cut) for (let k = 0; k < brk.length; k++) { if (brk[k] > xPrev && brk[k] <= x) { cut = true; break; } }
-        if (cut) pen = false;
-      }
-      if (!pen) { ctx.moveTo(px, clampPy(py)); pen = true; } else ctx.lineTo(px, clampPy(py));
-      py0 = py; xPrev = x;
-    }
-    ctx.stroke(); ctx.setLineDash([]);
-  }
-
-  function dot(x, y, col, open) {
-    const px = X(x), py = Y(y);
-    if (px < -10 || px > CW + 10 || py < -10 || py > CH + 10) return false;
-    ctx.beginPath(); ctx.arc(px, py, 5, 0, 6.2832);
-    if (open) { ctx.fillStyle = css('--card'); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.stroke(); }
-    else { ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = css('--card'); ctx.stroke(); }
-    return true;
-  }
-  const labNum = v => { const n = E.nice(v, 1e-9); return n.exact ? n.text : E.fmtNum(v, 3); };
-  function label(x, y, col, dx, dy) {
-    if (!$('g-lbl').checked) return;
-    const px = X(x) + (dx === undefined ? 8 : dx), py = Y(y) + (dy === undefined ? -8 : dy);
-    const t = '(' + labNum(x) + ', ' + labNum(y) + ')';
-    ctx.font = '12px system-ui,sans-serif'; ctx.textBaseline = 'alphabetic';
-    const w = ctx.measureText(t).width;
-    let tx = px; if (tx + w > CW - 4) tx = X(x) - w - 8;
-    ctx.lineWidth = 4; ctx.strokeStyle = css('--card'); ctx.strokeText(t, tx, py);
-    ctx.fillStyle = col; ctx.fillText(t, tx, py);
-  }
-
-  function draw() {
-    if (!CW || !opt('graph')) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, CW, CH);
-    ctx.fillStyle = css('--card'); ctx.fillRect(0, 0, CW, CH);
-    const gridOn = $('g-grid').checked;
-    const sx = niceStep((view.xmax - view.xmin) / Math.max(3, CW / 90)), sy = niceStep((view.ymax - view.ymin) / Math.max(3, CH / 70));
-    const colGrid = css('--grid'), colAxis = css('--axis'), colInk = css('--mute');
-    ctx.font = '12px system-ui,sans-serif';
-    // mreža
-    ctx.lineWidth = 1; ctx.strokeStyle = colGrid; ctx.setLineDash([]);
-    if (gridOn) {
-      ctx.beginPath();
-      for (let x = Math.ceil(view.xmin / sx) * sx; x <= view.xmax; x += sx) { const px = Math.round(X(x)) + 0.5; ctx.moveTo(px, 0); ctx.lineTo(px, CH); }
-      for (let y = Math.ceil(view.ymin / sy) * sy; y <= view.ymax; y += sy) { const py = Math.round(Y(y)) + 0.5; ctx.moveTo(0, py); ctx.lineTo(CW, py); }
-      ctx.stroke();
-    }
-    // ose
-    const ax = Math.min(Math.max(X(0), 0), CW), ay = Math.min(Math.max(Y(0), 0), CH);
-    ctx.strokeStyle = colAxis; ctx.lineWidth = 1.4;
-    ctx.beginPath(); ctx.moveTo(0, ay); ctx.lineTo(CW, ay); ctx.moveTo(ax, 0); ctx.lineTo(ax, CH); ctx.stroke();
-    ctx.fillStyle = colInk; ctx.textBaseline = 'top'; ctx.textAlign = 'center';
-    const ty = Math.min(ay + 4, CH - 16);
-    for (let x = Math.ceil(view.xmin / sx) * sx; x <= view.xmax; x += sx) { if (Math.abs(x) < sx / 2) continue; const px = X(x); if (px < 14 || px > CW - 14) continue; ctx.fillText(tickTxt(Math.round(x / sx) * sx), px, ty); }
-    ctx.textAlign = ax > CW - 40 ? 'right' : 'left'; ctx.textBaseline = 'middle';
-    const tx = ax > CW - 40 ? ax - 5 : ax + 5;
-    for (let y = Math.ceil(view.ymin / sy) * sy; y <= view.ymax; y += sy) { if (Math.abs(y) < sy / 2) continue; const py = Y(y); if (py < 8 || py > CH - 8) continue; ctx.fillText(tickTxt(Math.round(y / sy) * sy), tx, py); }
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-    ctx.fillText('x', CW - 12, ay - 6); ctx.fillText('y', ax + 7, 12);
-    if (!model || !R) return;
-
-    const lw = parseFloat($('g-lw').value) || 2.5;
-    const brk = (R.points.breaks || []).concat(R.specials.map(s => s.x)).concat(R.crit.filter(c => c.k === 'corner').map(c => c.x)).sort((a, b) => a - b);
-    // asimptote
-    if ($('g-asy').checked) {
-      ctx.setLineDash([7, 5]); ctx.lineWidth = 1.6; ctx.strokeStyle = css('--asy');
-      const vs = [];
-      R.vertical.forEach(s => { vs.push(s.x); if (R.periodic && R.period) for (let k = -20; k <= 20; k++) vs.push(s.x + k * R.period); });
-      ctx.beginPath();
-      vs.forEach(x => { if (x >= view.xmin && x <= view.xmax) { const px = Math.round(X(x)) + 0.5; ctx.moveTo(px, 0); ctx.lineTo(px, CH); } });
-      R.horizontal.forEach(a => {
-        const y = a.L.v; const x0 = a.side === 'pos' ? Math.max(view.xmin, 0) : view.xmin, x1 = a.side === 'neg' ? Math.min(view.xmax, 0) : view.xmax;
-        const py = Math.round(Y(y)) + 0.5; ctx.moveTo(X(x0), py); ctx.lineTo(X(x1), py);
-      });
-      R.slant.forEach(a => {
-        const k = a.k.v, n = a.n.v;
-        const x0 = a.side === 'pos' ? Math.max(view.xmin, 0) : view.xmin, x1 = a.side === 'neg' ? Math.min(view.xmax, 0) : view.xmax;
-        ctx.moveTo(X(x0), Y(k * x0 + n)); ctx.lineTo(X(x1), Y(k * x1 + n));
-      });
-      ctx.stroke(); ctx.setLineDash([]);
-    }
-    // izvodi i f
-    if ($('g-d2').checked) plot(model.fpp, css('--d2'), Math.max(1.5, lw * 0.7), [5, 4], brk);
-    if ($('g-d1').checked) plot(model.fp, css('--d1'), Math.max(1.5, lw * 0.7), [], brk);
-    plot(model.f, css('--curve'), lw, [], brk);
-    // tačke
-    if ($('g-pts').checked) {
-      R.points.holes.forEach(h => { dot(h.x, h.y, css('--curve'), true); if (h.type === 'jump' && h.y2 !== null) dot(h.x, h.y2, css('--curve'), true); });
-      R.points.zeros.forEach(z => { if (dot(z.x, 0, css('--good'))) label(z.x, 0, css('--good'), 7, 18); });
-      if (R.points.yint) { if (dot(0, R.points.yint.y, css('--warn'))) label(0, R.points.yint.y, css('--warn'), 8, -8); }
-      R.crit.forEach(c => { if (!isFinite(c.y)) return; if (c.type === 'max' || c.type === 'min') { if (dot(c.x, c.y, css(c.type === 'max' ? '--max' : '--min'))) label(c.x, c.y, css(c.type === 'max' ? '--max' : '--min'), 8, c.type === 'max' ? -10 : 18); } });
-      R.infl.forEach(p => { if (dot(p.x, p.y, css('--infl'))) label(p.x, p.y, css('--infl'), 8, -10); });
-    }
-    // legenda
-    $('legend').innerHTML = '<span><i style="background:' + css('--curve') + '"></i>f(x)</span>' +
-      ($('g-d1').checked ? '<span><i style="background:' + css('--d1') + '"></i>f′(x)</span>' : '') +
-      ($('g-d2').checked ? '<span><i style="background:' + css('--d2') + '"></i>f″(x)</span>' : '') +
-      ($('g-asy').checked ? '<span><i style="background:' + css('--asy') + ';opacity:.8"></i>asimptote</span>' : '') +
-      ($('g-pts').checked ? '<span style="color:' + css('--good') + '">● nule</span><span style="color:' + css('--max') + '">● maks.</span><span style="color:' + css('--min') + '">● min.</span><span style="color:' + css('--infl') + '">● prevoj</span><span>○ prekid</span>' : '');
-  }
-
-  /* ---------- interakcija ---------- */
-  const ptrs = new Map();
-  let lastDist = 0;
-  const manual = () => { $('autoy').checked = false; syncInputs(); };
-  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY }); if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; lastDist = Math.hypot(a.x - b.x, a.y - b.y); } });
-  cv.addEventListener('pointermove', e => {
-    const p = ptrs.get(e.pointerId);
-    if (!p) { hover(e.offsetX); return; }
-    if (ptrs.size === 1) {
-      const dx = e.offsetX - p.x, dy = e.offsetY - p.y;
-      const wx = dx / CW * (view.xmax - view.xmin), wy = dy / CH * (view.ymax - view.ymin);
-      view.xmin -= wx; view.xmax -= wx; view.ymin += wy; view.ymax += wy;
-      p.x = e.offsetX; p.y = e.offsetY; manual(); draw();
-    } else if (ptrs.size === 2) {
-      p.x = e.offsetX; p.y = e.offsetY;
-      const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
-      if (lastDist > 0 && d > 0) { zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, lastDist / d); }
-      lastDist = d;
-    }
-  });
-  const up = e => { ptrs.delete(e.pointerId); lastDist = 0; };
-  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
-  cv.addEventListener('pointerleave', () => { if (!ptrs.size) $('hover').innerHTML = '&nbsp;'; });
-  cv.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.offsetX, e.offsetY, e.deltaY > 0 ? 1.15 : 1 / 1.15); }, { passive: false });
-  cv.addEventListener('dblclick', () => { if (R) { defaultView(); draw(); } });
-  function zoomAt(px, py, f) {
-    const x0 = invX(px), y0 = invY(py);
-    view.xmin = x0 - (x0 - view.xmin) * f; view.xmax = x0 + (view.xmax - x0) * f;
-    view.ymin = y0 - (y0 - view.ymin) * f; view.ymax = y0 + (view.ymax - y0) * f;
-    manual(); draw();
-  }
-  function hover(px) {
-    if (!model) return;
-    const x = invX(px), y = model.f(x);
-    $('hover').textContent = 'x = ' + E.fmtNum(x, 5) + ',   f(x) = ' + (isFinite(y) ? E.fmtNum(y, 6) : 'nije definisano');
-  }
-  $('zin').addEventListener('click', () => zoomAt(CW / 2, CH / 2, 1 / 1.4));
-  $('zout').addEventListener('click', () => zoomAt(CW / 2, CH / 2, 1.4));
-  $('reset').addEventListener('click', () => { if (R) { defaultView(); draw(); } });
-  ['xmin', 'xmax', 'ymin', 'ymax'].forEach(id => $(id).addEventListener('change', () => {
-    const v = { xmin: parseFloat($('xmin').value), xmax: parseFloat($('xmax').value), ymin: parseFloat($('ymin').value), ymax: parseFloat($('ymax').value) };
-    if (isFinite(v.xmin) && isFinite(v.xmax) && v.xmax > v.xmin) { view.xmin = v.xmin; view.xmax = v.xmax; }
-    if (id[0] === 'y' && isFinite(v.ymin) && isFinite(v.ymax) && v.ymax > v.ymin) { view.ymin = v.ymin; view.ymax = v.ymax; $('autoy').checked = false; }
-    else if ($('autoy').checked) autoY();
-    syncInputs(); draw();
-  }));
-  $('autoy').addEventListener('change', () => { if ($('autoy').checked) { autoY(); syncInputs(); draw(); } });
-  $('png').addEventListener('click', () => {
-    cv.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'graf-funkcije.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); });
-  });
-
-  /* ---------- start ---------- */
-  window.addEventListener('load', () => {
-    const m = /[#&]f=([^&]*)/.exec(location.hash);
-    if (m) { try { $('fx').value = decodeURIComponent(m[1]); } catch (e) { } }
-    syncInputs();
-    solve();
-  });
-})();
+const $=id=>document.getElementById(id),ok=Number.isFinite;
+/* ---------- izrazi ---------- */
+const FN={sin:Math.sin,cos:Math.cos,tan:Math.tan,cot:x=>1/Math.tan(x),asin:Math.asin,acos:Math.acos,atan:Math.atan,sqrt:Math.sqrt,cbrt:Math.cbrt,exp:Math.exp,ln:Math.log,log:Math.log10,abs:Math.abs,sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh};
+const AL={tg:'tan',ctg:'cot',arcsin:'asin',arccos:'acos',arctg:'atan',arctan:'atan',lg:'log'};
+const NAMES=[...Object.keys(FN),...Object.keys(AL),'pi','e','x'].sort((a,b)=>b.length-a.length);
+const N=v=>({t:'n',v}),X={t:'x'},isN=n=>n.t=='n';
+const dep=n=>n.t=='x'?true:n.t=='n'?false:n.t=='o'?dep(n.a)||dep(n.b):dep(n.a);
+const ng=a=>isN(a)?N(-a.v):a.t=='neg'?a.a:{t:'neg',a};
+function mkf(n,a){if(isN(a)){const v=FN[n](a.v);if(ok(v))return N(v)}return{t:'f',n,a}}
+function mk(o,a,b){
+ if(o=='+'){if(b.t=='neg')return mk('-',a,b.a);if(a.t=='neg')return mk('-',b,a.a);if(isN(a)&&isN(b))return N(a.v+b.v);if(isN(a)&&!a.v)return b;if(isN(b)&&!b.v)return a}
+ else if(o=='-'){if(b.t=='neg')return mk('+',a,b.a);if(isN(a)&&isN(b))return N(a.v-b.v);if(isN(b)&&!b.v)return a;if(isN(a)&&!a.v)return ng(b)}
+ else if(o=='*'){if(a.t=='neg')return ng(mk('*',a.a,b));if(b.t=='neg')return ng(mk('*',a,b.a));if(isN(a)&&isN(b))return N(a.v*b.v);if((isN(a)&&!a.v)||(isN(b)&&!b.v))return N(0);if(isN(a)&&a.v==1)return b;if(isN(b)&&b.v==1)return a;if(isN(b))return mk('*',b,a)}
+ else if(o=='/'){if(a.t=='neg')return ng(mk('/',a.a,b));if(b.t=='neg')return ng(mk('/',a,b.a));if(isN(a)&&isN(b)&&b.v)return N(a.v/b.v);if(isN(a)&&!a.v)return N(0);if(isN(b)&&b.v==1)return a}
+ else if(o=='^'){if(isN(b)&&b.v==0)return N(1);if(isN(b)&&b.v==1)return a;if(isN(a)&&isN(b)){const v=Math.pow(a.v,b.v);if(ok(v))return N(v)}}
+ return{t:'o',o,a,b}}
+function split(w){if(!w)return[];for(const n of NAMES)if(w.startsWith(n)){const r=split(w.slice(n.length));if(r)return[n,...r]}return null}
+function parse(s){
+ s=s.toLowerCase().replace(/^\s*(f\(x\)|y)\s*=/,'').replace(/π/g,'pi').replace(/\*\*/g,'^').replace(/[−–]/g,'-').replace(/[×·]/g,'*').replace(/,/g,'.');
+ if(!s.trim())throw Error('Upiši funkciju.');
+ const T=[],re=/\s*(\d+\.?\d*|\.\d+|[a-z]+|[-+*\/^()])/y;
+ for(let p=0;s.slice(p).trim();){re.lastIndex=p;const m=re.exec(s);if(!m)throw Error('Nepoznat znak: '+s.slice(p).trim()[0]);p=re.lastIndex;const t=m[1];
+  if(/^[a-z]/.test(t)){const parts=split(t);if(!parts)throw Error('Nepoznata oznaka: '+t);T.push(...parts)}else T.push(t)}
+ let i=0;const opd=t=>t!==undefined&&(t=='('||/^[\d.a-z]/.test(t));
+ function pr(){const t=T[i++];if(t===undefined)throw Error('Izraz nije završen.');
+  if(t=='('){const e=ex();if(T[i++]!=')')throw Error('Fali zagrada ).');return e}
+  if(/^[\d.]/.test(t))return N(parseFloat(t));
+  if(t=='x')return X;if(t=='pi')return N(Math.PI);if(t=='e')return N(Math.E);
+  if(/^[a-z]/.test(t))return mkf(AL[t]||t,T[i]=='('?pr():pwr());
+  throw Error('Neočekivano: '+t)}
+ function pwr(){const b=pr();if(T[i]=='^'){i++;return mk('^',b,un())}return b}
+ function un(){if(T[i]=='-'){i++;return ng(un())}if(T[i]=='+'){i++;return un()}return pwr()}
+ function tm(){let a=un();for(;;){const t=T[i];if(t=='*'||t=='/'){i++;a=mk(t,a,un())}else if(opd(t))a=mk('*',a,pwr());else return a}}
+ function ex(){let a=tm();while(T[i]=='+'||T[i]=='-'){const o=T[i++];a=mk(o,a,tm())}return a}
+ const r=ex();if(i<T.length)throw Error('Neočekivano: '+T[i]);return r}
+function powr(a,b){if(a>=0||Number.isInteger(b))return Math.pow(a,b);for(const q of[3,5,7,9]){const p=b*q;if(Math.abs(p-Math.round(p))<1e-9)return(Math.round(p)%2?-1:1)*Math.pow(-a,b)}return NaN}
+function ev(n,x){switch(n.t){case'n':return n.v;case'x':return x;case'neg':return-ev(n.a,x);case'f':return FN[n.n](ev(n.a,x));
+ default:{const a=ev(n.a,x),b=ev(n.b,x);switch(n.o){case'+':return a+b;case'-':return a-b;case'*':return a*b;case'/':return a/b;default:return powr(a,b)}}}}
+/* ---------- simbolički izvod ---------- */
+const sq=a=>mk('^',a,N(2)),one=N(1);
+const DF={sin:(a,d)=>mk('*',mkf('cos',a),d),cos:(a,d)=>ng(mk('*',mkf('sin',a),d)),tan:(a,d)=>mk('/',d,sq(mkf('cos',a))),cot:(a,d)=>ng(mk('/',d,sq(mkf('sin',a)))),
+ asin:(a,d)=>mk('/',d,mkf('sqrt',mk('-',one,sq(a)))),acos:(a,d)=>ng(mk('/',d,mkf('sqrt',mk('-',one,sq(a))))),atan:(a,d)=>mk('/',d,mk('+',one,sq(a))),
+ sqrt:(a,d)=>mk('/',d,mk('*',N(2),mkf('sqrt',a))),cbrt:(a,d)=>mk('/',d,mk('*',N(3),sq(mkf('cbrt',a)))),exp:(a,d)=>mk('*',mkf('exp',a),d),
+ ln:(a,d)=>mk('/',d,a),log:(a,d)=>mk('/',d,mk('*',a,N(Math.LN10))),abs:(a,d)=>mk('*',mk('/',a,mkf('abs',a)),d),
+ sinh:(a,d)=>mk('*',mkf('cosh',a),d),cosh:(a,d)=>mk('*',mkf('sinh',a),d),tanh:(a,d)=>mk('/',d,sq(mkf('cosh',a)))};
+function D(n){switch(n.t){case'n':return N(0);case'x':return one;case'neg':return ng(D(n.a));case'f':return DF[n.n](n.a,D(n.a));
+ default:{const{o,a,b}=n,da=D(a),db=D(b);
+  if(o=='+'||o=='-')return mk(o,da,db);
+  if(o=='*')return mk('+',mk('*',da,b),mk('*',a,db));
+  if(o=='/')return dep(b)?mk('/',mk('-',mk('*',da,b),mk('*',a,db)),sq(b)):mk('/',da,b);
+  if(!dep(b))return mk('*',mk('*',b,mk('^',a,mk('-',b,one))),da);
+  const p=mk('^',a,b);if(!dep(a))return mk('*',mk('*',p,mkf('ln',a)),db);
+  return mk('*',p,mk('+',mk('*',db,mkf('ln',a)),mk('/',mk('*',b,da),a)))}}}
+function str(n,L=0){let s,p;switch(n.t){
+ case'n':s=String(Number(n.v.toPrecision(8)));p=n.v<0?2:4;break;
+ case'x':return'x';
+ case'neg':s='-'+str(n.a,3);p=2;break;
+ case'f':return n.n+'('+str(n.a)+')';
+ default:{const o=n.o;
+  if(o=='+'){s=str(n.a,1)+' + '+str(n.b,1);p=1}
+  else if(o=='-'){s=str(n.a,1)+' - '+str(n.b,2);p=1}
+  else if(o=='*'){s=str(n.a,2)+'·'+str(n.b,3);p=2}
+  else if(o=='/'){s=str(n.a,2)+'/'+str(n.b,3);p=2}
+  else{s=str(n.a,4)+'^'+str(n.b,4);p=3}}}
+ return p<L?'('+s+')':s}
+/* ---------- brojevi ---------- */
+const snap=v=>{if(!ok(v))return v;if(Math.abs(v)<1e-9)return 0;for(const c of[1,Math.PI]){const r=v/c;for(let q=1;q<=12;q++){const p=Math.round(r*q);if(Math.abs(r*q-p)<1e-7*q)return p*c/q}}return Math.round(v*1e6)/1e6};
+const fx=v=>{if(v===-Infinity)return'-∞';if(v===Infinity)return'∞';if(!ok(v))return'?';const s=Number(v.toPrecision(6)),r=v/Math.PI;
+ if(Math.abs(r)>1e-9&&!Number.isInteger(v))for(const q of[1,2,3,4,6])if(Math.abs(r*q-Math.round(r*q))<1e-7*q){const p=Math.round(r*q);return(p==1?'':p==-1?'-':p)+'π'+(q>1?'/'+q:'')+' ≈ '+s}
+ return String(s)};
+const pt=(x,y)=>`(${fx(x)}, ${fx(y)})`;
+/* ---------- analiza ---------- */
+function analyze(src){
+ const f=parse(src),f1=D(f),f2=D(f1),F=x=>ev(f,x);
+ const g1=x=>{const d=ev(f1,x);return ok(d)?d:(F(x+1e-6)-F(x-1e-6))/2e-6};
+ const g2=x=>{const d=ev(f2,x);return ok(d)?d:(F(x+1e-4)-2*F(x)+F(x-1e-4))/1e-8};
+ const R=Math.max(50,Math.abs(+$('ax').value)||0,Math.abs(+$('bx').value)||0),n=24000,h=2*R/n,xs=[],ys=[];
+ for(let i=0;i<=n;i++){const x=-R+i*h;xs.push(x);ys.push(F(x))}
+ const root=(g,a,b)=>{let ga=g(a);for(let k=0;k<60;k++){const m=(a+b)/2,gm=g(m);if(!ok(gm))break;if(gm==0)return m;if((gm<0)==(ga<0)){a=m;ga=gm}else b=m}return(a+b)/2};
+ const rts=(g,chk)=>{const r=[];let li=-1,gl=0;for(let i=0;i<=n;i++){if(!ok(ys[i])){li=-1;continue}const c=g(xs[i]);if(!ok(c))continue;let z=null;
+  if(li>=0&&gl!=0){if(c==0)z=xs[i];else if(gl*c<0)z=root(g,xs[li],xs[i])}li=i;gl=c;
+  if(z!==null){const y=F(z);if(ok(y)&&chk(y)){z=snap(z);if(!r.length||Math.abs(z-r[r.length-1])>1e-6)r.push(z)}}}return r};
+ /* domen: izuzeti dijelovi */
+ const edge=(d,u)=>{let lo=d,hi=u;for(let k=0;k<60;k++){const m=(lo+hi)/2;if(ok(F(m)))lo=m;else hi=m}return(lo+hi)/2};
+ const ex=[];for(let i=0;i<=n;){if(ok(ys[i])){i++;continue}let j=i;while(j<n&&!ok(ys[j+1]))j++;
+  let a=-Infinity,b=Infinity;if(i>0)a=snap(edge(xs[i-1],xs[i]));if(j<n)b=snap(edge(xs[j+1],xs[j]));if(Math.abs(a-b)<1e-6)b=a;ex.push({a,b});i=j+1}
+ /* vertikalne asimptote */
+ const cand=[];ex.forEach(e=>{if(ok(e.a))cand.push(e.a);if(ok(e.b))cand.push(e.b)});
+ for(let i=1;i<n;i++){const y=Math.abs(ys[i]);if(ok(y)&&y>30&&y>Math.abs(ys[i-1])&&y>=Math.abs(ys[i+1])){let l=xs[i-1],r=xs[i+1];
+  for(let k=0;k<100;k++){const m1=l+(r-l)/3,m2=r-(r-l)/3;if(Math.abs(F(m1))<Math.abs(F(m2)))l=m1;else r=m2}cand.push(snap((l+r)/2))}}
+ const side=(a,s)=>{const v=[1e-2,1e-4,1e-6,1e-8].map(t=>Math.abs(F(a+s*t)));if(!v.every(ok))return 0;
+  const A=v[3]>20*v[1]&&v[3]>100,B=v[0]<v[1]&&v[1]<v[2]&&v[2]<v[3]&&v[3]-v[0]>=3&&v[3]>15;return A||B?(F(a+s*1e-8)>0?1:-1):0};
+ const va=[];cand.sort((p,q)=>p-q).forEach(a=>{if(va.length&&Math.abs(a-va[va.length-1].a)<1e-5)return;const L=side(a,-1),Rr=side(a,1);if(L||Rr)va.push({a,L,R:Rr})});
+ va.forEach(v=>{if(!ex.some(e=>v.a>=e.a-1e-5&&v.a<=e.b+1e-5))ex.push({a:v.a,b:v.a,pole:1})});
+ ex.sort((p,q)=>p.a-q.a);
+ const closed=v=>ok(v)&&ok(F(v))&&!ex.some(e=>e.pole&&Math.abs(e.a-v)<1e-9);
+ const dom=[];{let s=-Infinity;for(const e of ex){if(e.a!==-Infinity&&e.a>s)dom.push([s,e.a]);s=Math.max(s,e.b)}if(s!==Infinity)dom.push([s,Infinity])}
+ const domS=!ex.length?'ℝ':dom.length?dom.map(([l,r])=>(closed(l)?'[':'(')+fx(l)+', '+fx(r)+(closed(r)?']':')')).join(' ∪ '):'∅';
+ /* horizontalne i kose asimptote */
+ const sl=s=>{const X1=s*1e5,X2=s*1e7,y1=F(X1),y2=F(X2);if(!ok(y1)||!ok(y2))return null;const k1=y1/X1,k2=y2/X2;if(Math.abs(k1-k2)>1e-5*(1+Math.abs(k2)))return null;
+  const k=snap(k2),n1=y1-k*X1,n2=y2-k*X2;if(Math.abs(n1-n2)>1e-4*(1+Math.abs(n2)))return null;return{k,n:snap(n2)}};
+ const lin=a=>{const n=fx(a.n).replace(/ ≈.*/,'');return a.k==0?`y = ${n}`:`y = ${a.k==1?'':a.k==-1?'-':fx(a.k).replace(/ ≈.*/,'')}x`+(a.n?(a.n>0?' + ':' - ')+fx(Math.abs(a.n)).replace(/ ≈.*/,''):'')};
+ const aL=sl(-1),aR=sl(1),ha=[];
+ if(aL&&aR&&aL.k==aR.k&&aL.n==aR.n)ha.push({a:aL,t:'x → ±∞'});else{if(aL)ha.push({a:aL,t:'x → -∞'});if(aR)ha.push({a:aR,t:'x → +∞'})}
+ /* nule, ekstremi, prevoji */
+ const crit=rts(g1,y=>Math.abs(y)<1e7),infl=rts(g2,y=>Math.abs(y)<1e7);
+ const zeros=[...rts(F,y=>Math.abs(y)<1e-6),...crit.filter(c=>Math.abs(F(c))<1e-9)].sort((p,q)=>p-q).filter((z,i,a)=>!i||Math.abs(z-a[i-1])>1e-6);
+ const ext=crit.map(c=>{const l=g1(c-1e-5),r=g1(c+1e-5);return l>0&&r<0?['maksimum',c]:l<0&&r>0?['minimum',c]:null}).filter(Boolean);
+ const iv=(pts,g)=>{const out=[];dom.forEach(([lo,hi],pid)=>{const b=[lo,...pts.filter(p=>p>lo+1e-9&&p<hi-1e-9),hi];
+  for(let k=0;k<b.length-1;k++){const l=b[k],r=b[k+1],m=l==-Infinity?(r==Infinity?0:r-1):r==Infinity?l+1:(l+r)/2,d=g(m),s=d>1e-9?1:d<-1e-9?-1:0,z=out[out.length-1];
+   if(z&&z.pid==pid&&z.s==s)z.hi=r;else out.push({lo:l,hi:r,s,pid})}});
+  return out.map(o=>({...o,txt:(closed(o.lo)?'[':'(')+fx(o.lo)+', '+fx(o.hi)+(closed(o.hi)?']':')')}))};
+ let par='';{let ev_=1,od=1,c=0;for(const t of[.7,1.3,2.9,4.1]){const a=F(t),b=F(-t);if(ok(a)&&ok(b)){c++;if(Math.abs(a-b)>1e-9*(1+Math.abs(a)))ev_=0;if(Math.abs(a+b)>1e-9*(1+Math.abs(a)))od=0}}
+  par=!c?'nije određena':ev_&&od?'parna i neparna (f=0)':ev_?'parna':od?'neparna':'ni parna ni neparna'}
+ const y0=F(0);
+ return{F,g1,g2,f1:str(f1),f2:str(f2),domS,zeros,y0,par,va,ha:ha.map(o=>({...o,txt:lin(o.a)})),mono:iv(crit,g1),ext:ext.map(([t,c])=>[t,c,F(c)]),conv:iv(infl,g2),infl:infl.map(c=>[c,F(c)])}}
+/* ---------- prikaz ---------- */
+function show(r){
+ const o={dom:$('o1').checked,mono:$('o2').checked,conv:$('o3').checked,asym:$('o4').checked};
+ const L=a=>a.length?a.join('<br>'):'nema',cards=[];
+ const card=(t,b)=>cards.push(`<section class="card"><h2>${t}</h2><p class="m">${b}</p></section>`);
+ if(o.dom)card('Domen, nule, parnost',`Domen: ${r.domS}<br>Parnost: ${r.par}<br>Presjek sa y-osom: ${ok(r.y0)?pt(0,r.y0):'ne postoji'}<br>Nule: ${r.zeros.length?r.zeros.map(z=>'x = '+fx(z)).join(', '):'nema'}`);
+ if(o.mono)card('Monotonost i ekstremi',`f′(x) = ${r.f1}<br>${L(r.mono.map(m=>`${m.txt}: ${m.s>0?'↗ raste':m.s<0?'↘ opada':'konstantna'}`))}<br><br>Ekstremi: ${r.ext.length?'<br>'+r.ext.map(e=>`${e[0]} ${pt(e[1],e[2])}`).join('<br>'):'nema'}`);
+ if(o.conv)card('Konveksnost i prevojne tačke',`f″(x) = ${r.f2}<br>${L(r.conv.map(m=>`${m.txt}: ${m.s>0?'∪ konveksna (f″>0)':m.s<0?'∩ konkavna (f″<0)':'linearna'}`))}<br><br>Prevojne tačke: ${r.infl.length?'<br>'+r.infl.map(p=>pt(p[0],p[1])).join('<br>'):'nema'}`);
+ if(o.asym){const sg=v=>v>0?'+∞':'-∞';
+  card('Asimptote',`Vertikalne: ${r.va.length?'<br>'+r.va.map(v=>`x = ${fx(v.a)} (`+[v.L?'lijevo → '+sg(v.L):'',v.R?'desno → '+sg(v.R):''].filter(Boolean).join(', ')+')').join('<br>'):'nema'}<br>Horizontalne i kose: ${r.ha.length?'<br>'+r.ha.map(a=>`${a.txt} (${a.t})`).join('<br>'):'nema'}`)}
+ $('out').innerHTML=cards.join('');draw(r,o)}
+function draw(r,o){
+ const c=$('cv'),d=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*d;c.height=h*d;const g=c.getContext('2d');g.scale(d,d);
+ const cs=getComputedStyle(document.documentElement),col=k=>cs.getPropertyValue(k).trim();
+ let xa=parseFloat($('ax').value),xb=parseFloat($('bx').value);if(!(xa<xb)){xa=-10;xb=10}
+ const M=Math.min(3000,Math.round(w*2)),xs=[],v=[];for(let i=0;i<=M;i++){const x=xa+(xb-xa)*i/M;xs.push(x);v.push(r.F(x))}
+ let ya=parseFloat($('ay').value),yb=parseFloat($('by').value);
+ if(!(ya<yb)){const a=v.filter(ok).sort((p,q)=>p-q);if(a.length){let lo=a[Math.floor(a.length*.01)],hi=a[Math.ceil(a.length*.99)-1];if(hi-lo<1e-9){lo-=1;hi+=1}const p=(hi-lo)*.15;ya=lo-p;yb=hi+p}else{ya=-10;yb=10}}
+ const X=x=>(x-xa)/(xb-xa)*w,Y=y=>Math.max(-1e5,Math.min(1e5,h-(y-ya)/(yb-ya)*h));
+ const st=q=>{const p=Math.pow(10,Math.floor(Math.log10(q/5))),m=q/5/p;return(m<1.5?1:m<3.5?2:m<7.5?5:10)*p};
+ g.font='11px system-ui,sans-serif';g.lineWidth=1;g.fillStyle=col('--mu');
+ for(const[lo,hi,hz]of[[xa,xb,0],[ya,yb,1]]){const s=st(hi-lo);for(let t=Math.ceil(lo/s)*s;t<=hi+s/1e6;t+=s){g.strokeStyle=col('--grid');g.beginPath();
+  if(!hz){g.moveTo(X(t),0);g.lineTo(X(t),h)}else{g.moveTo(0,Y(t));g.lineTo(w,Y(t))}g.stroke();
+  const tx=String(+t.toFixed(8));if(Math.abs(t)<s/1e3)continue;
+  if(!hz)g.fillText(tx,X(t)+2,Math.max(12,Math.min(h-4,Y(0)+12)));else g.fillText(tx,Math.max(2,Math.min(w-30,X(0)+4)),Y(t)-3)}}
+ g.strokeStyle=col('--mu');g.lineWidth=1.4;g.beginPath();g.moveTo(X(0),0);g.lineTo(X(0),h);g.moveTo(0,Y(0));g.lineTo(w,Y(0));g.stroke();
+ g.save();g.beginPath();g.rect(0,0,w,h);g.clip();
+ const pl=(vals,cl,lw)=>{g.strokeStyle=cl;g.lineWidth=lw;g.beginPath();let pen=false,py=0;for(let i=0;i<=M;i++){const y=vals[i];if(!ok(y)){pen=false;continue}const yy=Y(y);if(pen&&Math.abs(yy-py)>h*1.2)pen=false;if(pen)g.lineTo(X(xs[i]),yy);else g.moveTo(X(xs[i]),yy);pen=true;py=yy}g.stroke()};
+ if(o.asym){g.setLineDash([6,5]);g.strokeStyle=col('--mu');g.lineWidth=1.3;
+  r.va.forEach(a=>{g.beginPath();g.moveTo(X(a.a),0);g.lineTo(X(a.a),h);g.stroke()});
+  r.ha.forEach(a=>{g.beginPath();g.moveTo(X(xa),Y(a.a.k*xa+a.a.n));g.lineTo(X(xb),Y(a.a.k*xb+a.a.n));g.stroke()});g.setLineDash([])}
+ if($('d2').checked)pl(xs.map(r.g2),col('--c3'),1.5);
+ if($('d1').checked)pl(xs.map(r.g1),col('--c2'),1.5);
+ pl(v,col('--ac'),2.4);
+ const dot=(x,y,cl)=>{if(!ok(y))return;g.fillStyle=cl;g.strokeStyle=col('--card');g.lineWidth=2;g.beginPath();g.arc(X(x),Y(y),4.5,0,7);g.fill();g.stroke()};
+ if(o.dom)r.zeros.forEach(z=>dot(z,0,col('--ac')));
+ if(o.mono)r.ext.forEach(e=>dot(e[1],e[2],col('--c2')));
+ if(o.conv)r.infl.forEach(p=>dot(p[0],p[1],col('--c3')));
+ g.restore()}
+/* ---------- događaji ---------- */
+function run(){try{const r=analyze($('fx').value);$('err').textContent='';show(r)}catch(e){$('err').textContent='⚠ '+e.message}}
+let tm;const later=()=>{clearTimeout(tm);tm=setTimeout(run,250)};
+document.querySelectorAll('input').forEach(i=>i.addEventListener(i.type=='checkbox'?'change':'input',later));
+$('all').onclick=()=>{['o1','o2','o3','o4'].forEach(i=>$(i).checked=true);run()};
+addEventListener('resize',later);
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',run);
+run();
 </script>
 </body>
 </html>
