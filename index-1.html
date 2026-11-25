@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ispitivanje toka funkcije</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--tx:#17202a;--mu:#5d6b7a;--ac:#1d4ed8;--bd:#d5dce4;--c2:#d9480f;--c3:#2b8a3e;--grid:#e3e8ee}
+@media(prefers-color-scheme:dark){:root{--bg:#10151b;--card:#18202a;--tx:#e6ebf1;--mu:#93a1b0;--ac:#74a0ff;--bd:#2a3644;--c2:#ff922b;--c3:#69db7c;--grid:#222d3a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:880px;margin:auto;padding:16px}
+h1{font:700 1.7rem/1.2 Georgia,serif;margin:8px 0 16px}
+h2{font:700 1.05rem Georgia,serif;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px}
+.card p{margin:0;overflow-wrap:anywhere}
+input[type=text],input[type=number]{width:100%;font:inherit;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx)}
+#fx{font:1.15rem ui-monospace,Menlo,monospace}
+.hint{color:var(--mu);font-size:.85rem;margin-top:6px}
+#err{color:#e03131;min-height:1.2em;margin-top:6px;font-size:.9rem}
+.sw{display:flex;align-items:center;gap:12px;padding:7px 0;cursor:pointer}
+.sw input{position:absolute;opacity:0}
+.sw span{flex:none;width:44px;height:24px;border-radius:12px;background:var(--bd);position:relative;transition:background .15s}
+.sw span::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw input:checked+span{background:var(--ac)}
+.sw input:checked+span::after{transform:translateX(20px)}
+.sw input:focus-visible+span{outline:2px solid var(--ac);outline-offset:2px}
+button{font:inherit;font-weight:600;padding:9px 14px;border:0;border-radius:8px;background:var(--ac);color:#fff;cursor:pointer;margin-top:8px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.g label{font-size:.85rem;color:var(--mu)}
+.ck{display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:.92rem}
+canvas{width:100%;height:340px;display:block;border:1px solid var(--bd);border-radius:10px;background:var(--card);margin-top:10px;touch-action:pan-y}
+.m{font:1.05rem/2 Georgia,'Times New Roman',serif}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 3px;line-height:1.35}
+.fr>span{padding:0 5px}
+.fr>span:first-child{border-bottom:1.5px solid currentColor}
+.rt{border-top:1.5px solid currentColor;padding:0 2px;margin-left:1px}
+sup{font-size:.7em;line-height:0}
+.tb{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tb button{margin:0;padding:6px 12px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);font-weight:500}
+#pv{margin-top:8px;overflow-x:auto;min-height:2.2em}
+.k{color:var(--mu)}
+</style>
+</head>
+<body>
+<main>
+<h1>Ispitivanje toka funkcije</h1>
+
+<section class="card">
+  <h2>Funkcija</h2>
+  <label for="fx" class="k">f(x) =</label>
+  <input id="fx" type="text" value="(x^2-1)/(x-2)" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div class="tb">
+    <button type="button" onclick="ins('()/()',4,1)" title="Razlomak">a⁄b</button>
+    <button type="button" onclick="ins('^()',1)" title="Potencija">xⁿ</button>
+    <button type="button" onclick="ins('sqrt()',1)" title="Korijen">√</button>
+    <button type="button" onclick="ins('abs()',1)" title="Apsolutna vrijednost">|x|</button>
+    <button type="button" onclick="ins('pi')">π</button>
+    <button type="button" onclick="ins('e')">e</button>
+  </div>
+  <div id="pv" class="m"></div>
+  <div id="err"></div>
+  <div class="hint">Primjeri: x^3-3x · 1/(x-1) · sin(x)/x · ln(x) · sqrt(x) · e^x · tan(x) · abs(x) · x*e^(-x). Možeš i kucati x^2 ili x², a dugmad iznad ubacuju razlomak, potenciju i korijen. Znak * nije obavezan (2x, 3sin(x)).</div>
+</section>
+
+<section class="card">
+  <h2>Šta da uradim?</h2>
+  <label class="sw"><input type="checkbox" id="o1" checked><span></span>Domen, nule, parnost</label>
+  <label class="sw"><input type="checkbox" id="o2" checked><span></span>Monotonost i ekstremi</label>
+  <label class="sw"><input type="checkbox" id="o3"><span></span>Konveksnost i prevojne tačke</label>
+  <label class="sw"><input type="checkbox" id="o4" checked><span></span>Asimptote</label>
+  <button id="all" type="button">Cijeli tok funkcije</button>
+</section>
+
+<section class="card">
+  <h2>Graf</h2>
+  <div class="g">
+    <div><label for="ax">x od</label><input id="ax" type="number" value="-10" step="any"></div>
+    <div><label for="bx">x do</label><input id="bx" type="number" value="10" step="any"></div>
+    <div><label for="ay">y od (prazno = automatski)</label><input id="ay" type="number" step="any"></div>
+    <div><label for="by">y do (prazno = automatski)</label><input id="by" type="number" step="any"></div>
+  </div>
+  <label class="ck"><input type="checkbox" id="d1"> prikaži f′(x)</label>
+  <label class="ck"><input type="checkbox" id="d2"> prikaži f″(x)</label>
+  <canvas id="cv"></canvas>
+  <div class="hint">Linija f(x) je plava, f′ narandžasta, f″ zelena. Isprekidane linije su asimptote.</div>
+</section>
+
+<div id="out"></div>
+<p class="hint">Analiza je numerička i traži karakteristične tačke na intervalu [−50, 50] (ili širem ako je graf širi); izvodi se računaju simbolički.</p>
+</main>
+
+<script>
+const $=id=>document.getElementById(id),ok=Number.isFinite;
+/* ---------- izrazi ---------- */
+const FN={sin:Math.sin,cos:Math.cos,tan:Math.tan,cot:x=>1/Math.tan(x),asin:Math.asin,acos:Math.acos,atan:Math.atan,sqrt:Math.sqrt,cbrt:Math.cbrt,exp:Math.exp,ln:Math.log,log:Math.log10,abs:Math.abs,sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh};
+const AL={tg:'tan',ctg:'cot',arcsin:'asin',arccos:'acos',arctg:'atan',arctan:'atan',lg:'log'};
+const NAMES=[...Object.keys(FN),...Object.keys(AL),'pi','e','x'].sort((a,b)=>b.length-a.length);
+const N=v=>({t:'n',v}),X={t:'x'},isN=n=>n.t=='n';
+const dep=n=>n.t=='x'?true:n.t=='n'?false:n.t=='o'?dep(n.a)||dep(n.b):dep(n.a);
+const ng=a=>isN(a)?N(-a.v):a.t=='neg'?a.a:{t:'neg',a};
+function mkf(n,a){if(isN(a)){const v=FN[n](a.v);if(ok(v))return N(v)}return{t:'f',n,a}}
+function mk(o,a,b){
+ if(o=='+'){if(b.t=='neg')return mk('-',a,b.a);if(a.t=='neg')return mk('-',b,a.a);if(isN(a)&&isN(b))return N(a.v+b.v);if(isN(a)&&!a.v)return b;if(isN(b)&&!b.v)return a}
+ else if(o=='-'){if(b.t=='neg')return mk('+',a,b.a);if(isN(a)&&isN(b))return N(a.v-b.v);if(isN(b)&&!b.v)return a;if(isN(a)&&!a.v)return ng(b)}
+ else if(o=='*'){if(a.t=='neg')return ng(mk('*',a.a,b));if(b.t=='neg')return ng(mk('*',a,b.a));if(isN(a)&&isN(b))return N(a.v*b.v);if((isN(a)&&!a.v)||(isN(b)&&!b.v))return N(0);if(isN(a)&&a.v==1)return b;if(isN(b)&&b.v==1)return a;if(isN(b))return mk('*',b,a)}
+ else if(o=='/'){if(a.t=='neg')return ng(mk('/',a.a,b));if(b.t=='neg')return ng(mk('/',a,b.a));if(isN(a)&&isN(b)&&b.v)return N(a.v/b.v);if(isN(a)&&!a.v)return N(0);if(isN(b)&&b.v==1)return a}
+ else if(o=='^'){if(isN(b)&&b.v==0)return N(1);if(isN(b)&&b.v==1)return a;if(isN(a)&&isN(b)){const v=Math.pow(a.v,b.v);if(ok(v))return N(v)}}
+ return{t:'o',o,a,b}}
+function split(w){if(!w)return[];for(const n of NAMES)if(w.startsWith(n)){const r=split(w.slice(n.length));if(r)return[n,...r]}return null}
+function parse(s){
+ s=s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]+/g,m=>'^('+[...m].map(c=>'⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c)).join('')+')').toLowerCase().replace(/^\s*(f\(x\)|y)\s*=/,'').replace(/π/g,'pi').replace(/\*\*/g,'^').replace(/[−–]/g,'-').replace(/[×·]/g,'*').replace(/,/g,'.');
+ if(!s.trim())throw Error('Upiši funkciju.');
+ const T=[],re=/\s*(\d+\.?\d*|\.\d+|[a-z]+|[-+*\/^()])/y;
+ for(let p=0;s.slice(p).trim();){re.lastIndex=p;const m=re.exec(s);if(!m)throw Error('Nepoznat znak: '+s.slice(p).trim()[0]);p=re.lastIndex;const t=m[1];
+  if(/^[a-z]/.test(t)){const parts=split(t);if(!parts)throw Error('Nepoznata oznaka: '+t);T.push(...parts)}else T.push(t)}
+ let i=0;const opd=t=>t!==undefined&&(t=='('||/^[\d.a-z]/.test(t));
+ function pr(){const t=T[i++];if(t===undefined)throw Error('Izraz nije završen.');
+  if(t=='('){const e=ex();if(T[i++]!=')')throw Error('Fali zagrada ).');return e}
+  if(/^[\d.]/.test(t))return N(parseFloat(t));
+  if(t=='x')return X;if(t=='pi')return N(Math.PI);if(t=='e')return N(Math.E);
+  if(/^[a-z]/.test(t))return mkf(AL[t]||t,T[i]=='('?pr():pwr());
+  throw Error('Neočekivano: '+t)}
+ function pwr(){const b=pr();if(T[i]=='^'){i++;return mk('^',b,un())}return b}
+ function un(){if(T[i]=='-'){i++;return ng(un())}if(T[i]=='+'){i++;return un()}return pwr()}
+ function tm(){let a=un();for(;;){const t=T[i];if(t=='*'||t=='/'){i++;a=mk(t,a,un())}else if(opd(t))a=mk('*',a,pwr());else return a}}
+ function ex(){let a=tm();while(T[i]=='+'||T[i]=='-'){const o=T[i++];a=mk(o,a,tm())}return a}
+ const r=ex();if(i<T.length)throw Error('Neočekivano: '+T[i]);return r}
+function powr(a,b){if(a>=0||Number.isInteger(b))return Math.pow(a,b);for(const q of[3,5,7,9]){const p=b*q;if(Math.abs(p-Math.round(p))<1e-9)return(Math.round(p)%2?-1:1)*Math.pow(-a,b)}return NaN}
+function ev(n,x){switch(n.t){case'n':return n.v;case'x':return x;case'neg':return-ev(n.a,x);case'f':return FN[n.n](ev(n.a,x));
+ default:{const a=ev(n.a,x),b=ev(n.b,x);switch(n.o){case'+':return a+b;case'-':return a-b;case'*':return a*b;case'/':return a/b;default:return powr(a,b)}}}}
+/* ---------- simbolički izvod ---------- */
+const sq=a=>mk('^',a,N(2)),one=N(1);
+const DF={sin:(a,d)=>mk('*',mkf('cos',a),d),cos:(a,d)=>ng(mk('*',mkf('sin',a),d)),tan:(a,d)=>mk('/',d,sq(mkf('cos',a))),cot:(a,d)=>ng(mk('/',d,sq(mkf('sin',a)))),
+ asin:(a,d)=>mk('/',d,mkf('sqrt',mk('-',one,sq(a)))),acos:(a,d)=>ng(mk('/',d,mkf('sqrt',mk('-',one,sq(a))))),atan:(a,d)=>mk('/',d,mk('+',one,sq(a))),
+ sqrt:(a,d)=>mk('/',d,mk('*',N(2),mkf('sqrt',a))),cbrt:(a,d)=>mk('/',d,mk('*',N(3),sq(mkf('cbrt',a)))),exp:(a,d)=>mk('*',mkf('exp',a),d),
+ ln:(a,d)=>mk('/',d,a),log:(a,d)=>mk('/',d,mk('*',a,N(Math.LN10))),abs:(a,d)=>mk('*',mk('/',a,mkf('abs',a)),d),
+ sinh:(a,d)=>mk('*',mkf('cosh',a),d),cosh:(a,d)=>mk('*',mkf('sinh',a),d),tanh:(a,d)=>mk('/',d,sq(mkf('cosh',a)))};
+function D(n){switch(n.t){case'n':return N(0);case'x':return one;case'neg':return ng(D(n.a));case'f':return DF[n.n](n.a,D(n.a));
+ default:{const{o,a,b}=n,da=D(a),db=D(b);
+  if(o=='+'||o=='-')return mk(o,da,db);
+  if(o=='*')return mk('+',mk('*',da,b),mk('*',a,db));
+  if(o=='/')return dep(b)?mk('/',mk('-',mk('*',da,b),mk('*',a,db)),sq(b)):mk('/',da,b);
+  if(!dep(b))return mk('*',mk('*',b,mk('^',a,mk('-',b,one))),da);
+  const p=mk('^',a,b);if(!dep(a))return mk('*',mk('*',p,mkf('ln',a)),db);
+  return mk('*',p,mk('+',mk('*',db,mkf('ln',a)),mk('/',mk('*',b,da),a)))}}}
+function str(n,L=0){let s,p;switch(n.t){
+ case'n':s=String(Number(n.v.toPrecision(8)));p=n.v<0?2:4;break;
+ case'x':return'x';
+ case'neg':s='-'+str(n.a,3);p=2;break;
+ case'f':return n.n+'('+str(n.a)+')';
+ default:{const o=n.o;
+  if(o=='+'){s=str(n.a,1)+' + '+str(n.b,1);p=1}
+  else if(o=='-'){s=str(n.a,1)+' - '+str(n.b,2);p=1}
+  else if(o=='*'){s=str(n.a,2)+'·'+str(n.b,3);p=2}
+  else if(o=='/'){s=str(n.a,2)+'/'+str(n.b,3);p=2}
+  else{s=str(n.a,4)+'^'+str(n.b,4);p=3}}}
+ return p<L?'('+s+')':s}
+function mh(n,L=0){let s,p;switch(n.t){
+ case'n':{const v=n.v;s=(v<0?'−':'')+Number(Math.abs(v).toPrecision(8));p=v<0?2:4;break}
+ case'x':return'<i>x</i>';
+ case'neg':s='−'+mh(n.a,3);p=2;break;
+ case'f':return n.n=='sqrt'?'√<span class="rt">'+mh(n.a)+'</span>':n.n=='abs'?'|'+mh(n.a)+'|':n.n+'('+mh(n.a)+')';
+ default:{const o=n.o,a=n.a,b=n.b;
+  if(o=='+'){s=mh(a,1)+' + '+mh(b,1);p=1}
+  else if(o=='-'){s=mh(a,1)+' − '+mh(b,2);p=1}
+  else if(o=='*'){const dot=isN(a)&&a.v>=0&&(b.t=='x'||b.t=='f'||(b.t=='o'&&b.o=='^'));s=mh(a,2)+(dot?'':'·')+mh(b,3);p=2}
+  else if(o=='/'){s='<span class="fr"><span>'+mh(a)+'</span><span>'+mh(b)+'</span></span>';p=3}
+  else if(a.t=='f'&&a.n!='sqrt'&&a.n!='abs'){s=a.n+'<sup>'+mh(b)+'</sup>('+mh(a.a)+')';p=4}
+  else{s=mh(a,4)+'<sup>'+mh(b)+'</sup>';p=3}}}
+ return p<L?'('+s+')':s}
+/* ---------- brojevi ---------- */
+const snap=v=>{if(!ok(v))return v;if(Math.abs(v)<1e-9)return 0;for(const c of[1,Math.PI]){const r=v/c;for(let q=1;q<=12;q++){const p=Math.round(r*q);if(Math.abs(r*q-p)<1e-7*q)return p*c/q}}return Math.round(v*1e6)/1e6};
+const fx=v=>{if(v===-Infinity)return'-∞';if(v===Infinity)return'∞';if(!ok(v))return'?';const s=Number(v.toPrecision(6)),r=v/Math.PI;
+ if(Math.abs(r)>1e-9&&!Number.isInteger(v))for(const q of[1,2,3,4,6])if(Math.abs(r*q-Math.round(r*q))<1e-7*q){const p=Math.round(r*q);return(p==1?'':p==-1?'-':p)+'π'+(q>1?'/'+q:'')+' ≈ '+s}
+ return String(s)};
+const pt=(x,y)=>`(${fx(x)}, ${fx(y)})`;
+/* ---------- analiza ---------- */
+function analyze(src){
+ const f=parse(src),f1=D(f),f2=D(f1),F=x=>ev(f,x);
+ const g1=x=>{const d=ev(f1,x);return ok(d)?d:(F(x+1e-6)-F(x-1e-6))/2e-6};
+ const g2=x=>{const d=ev(f2,x);return ok(d)?d:(F(x+1e-4)-2*F(x)+F(x-1e-4))/1e-8};
+ const R=Math.max(50,Math.abs(+$('ax').value)||0,Math.abs(+$('bx').value)||0),n=24000,h=2*R/n,xs=[],ys=[];
+ for(let i=0;i<=n;i++){const x=-R+i*h;xs.push(x);ys.push(F(x))}
+ const root=(g,a,b)=>{let ga=g(a);for(let k=0;k<60;k++){const m=(a+b)/2,gm=g(m);if(!ok(gm))break;if(gm==0)return m;if((gm<0)==(ga<0)){a=m;ga=gm}else b=m}return(a+b)/2};
+ const rts=(g,chk)=>{const r=[];let li=-1,gl=0;for(let i=0;i<=n;i++){if(!ok(ys[i])){li=-1;continue}const c=g(xs[i]);if(!ok(c))continue;let z=null;
+  if(li>=0&&gl!=0){if(c==0)z=xs[i];else if(gl*c<0)z=root(g,xs[li],xs[i])}li=i;gl=c;
+  if(z!==null){const y=F(z);if(ok(y)&&chk(y)){z=snap(z);if(!r.length||Math.abs(z-r[r.length-1])>1e-6)r.push(z)}}}return r};
+ /* domen: izuzeti dijelovi */
+ const edge=(d,u)=>{let lo=d,hi=u;for(let k=0;k<60;k++){const m=(lo+hi)/2;if(ok(F(m)))lo=m;else hi=m}return(lo+hi)/2};
+ const ex=[];for(let i=0;i<=n;){if(ok(ys[i])){i++;continue}let j=i;while(j<n&&!ok(ys[j+1]))j++;
+  let a=-Infinity,b=Infinity;if(i>0)a=snap(edge(xs[i-1],xs[i]));if(j<n)b=snap(edge(xs[j+1],xs[j]));if(Math.abs(a-b)<1e-6)b=a;ex.push({a,b});i=j+1}
+ /* vertikalne asimptote */
+ const cand=[];ex.forEach(e=>{if(ok(e.a))cand.push(e.a);if(ok(e.b))cand.push(e.b)});
+ for(let i=1;i<n;i++){const y=Math.abs(ys[i]);if(ok(y)&&y>30&&y>Math.abs(ys[i-1])&&y>=Math.abs(ys[i+1])){let l=xs[i-1],r=xs[i+1];
+  for(let k=0;k<100;k++){const m1=l+(r-l)/3,m2=r-(r-l)/3;if(Math.abs(F(m1))<Math.abs(F(m2)))l=m1;else r=m2}cand.push(snap((l+r)/2))}}
+ const side=(a,s)=>{const v=[1e-2,1e-4,1e-6,1e-8].map(t=>Math.abs(F(a+s*t)));if(!v.every(ok))return 0;
+  const A=v[3]>20*v[1]&&v[3]>100,B=v[0]<v[1]&&v[1]<v[2]&&v[2]<v[3]&&v[3]-v[0]>=3&&v[3]>15;return A||B?(F(a+s*1e-8)>0?1:-1):0};
+ const va=[];cand.sort((p,q)=>p-q).forEach(a=>{if(va.length&&Math.abs(a-va[va.length-1].a)<1e-5)return;const L=side(a,-1),Rr=side(a,1);if(L||Rr)va.push({a,L,R:Rr})});
+ va.forEach(v=>{if(!ex.some(e=>v.a>=e.a-1e-5&&v.a<=e.b+1e-5))ex.push({a:v.a,b:v.a,pole:1})});
+ ex.sort((p,q)=>p.a-q.a);
+ const closed=v=>ok(v)&&ok(F(v))&&!ex.some(e=>e.pole&&Math.abs(e.a-v)<1e-9);
+ const dom=[];{let s=-Infinity;for(const e of ex){if(e.a!==-Infinity&&e.a>s)dom.push([s,e.a]);s=Math.max(s,e.b)}if(s!==Infinity)dom.push([s,Infinity])}
+ const domS=!ex.length?'ℝ':dom.length?dom.map(([l,r])=>(closed(l)?'[':'(')+fx(l)+', '+fx(r)+(closed(r)?']':')')).join(' ∪ '):'∅';
+ /* horizontalne i kose asimptote */
+ const sl=s=>{const X1=s*1e5,X2=s*1e7,y1=F(X1),y2=F(X2);if(!ok(y1)||!ok(y2))return null;const k1=y1/X1,k2=y2/X2;if(Math.abs(k1-k2)>1e-5*(1+Math.abs(k2)))return null;
+  const k=snap(k2),n1=y1-k*X1,n2=y2-k*X2;if(Math.abs(n1-n2)>1e-4*(1+Math.abs(n2)))return null;return{k,n:snap(n2)}};
+ const lin=a=>{const n=fx(a.n).replace(/ ≈.*/,'');return a.k==0?`y = ${n}`:`y = ${a.k==1?'':a.k==-1?'-':fx(a.k).replace(/ ≈.*/,'')}x`+(a.n?(a.n>0?' + ':' - ')+fx(Math.abs(a.n)).replace(/ ≈.*/,''):'')};
+ const aL=sl(-1),aR=sl(1),ha=[];
+ if(aL&&aR&&aL.k==aR.k&&aL.n==aR.n)ha.push({a:aL,t:'x → ±∞'});else{if(aL)ha.push({a:aL,t:'x → -∞'});if(aR)ha.push({a:aR,t:'x → +∞'})}
+ /* nule, ekstremi, prevoji */
+ const crit=rts(g1,y=>Math.abs(y)<1e7),infl=rts(g2,y=>Math.abs(y)<1e7);
+ const zeros=[...rts(F,y=>Math.abs(y)<1e-6),...crit.filter(c=>Math.abs(F(c))<1e-9)].sort((p,q)=>p-q).filter((z,i,a)=>!i||Math.abs(z-a[i-1])>1e-6);
+ const ext=crit.map(c=>{const l=g1(c-1e-5),r=g1(c+1e-5);return l>0&&r<0?['maksimum',c]:l<0&&r>0?['minimum',c]:null}).filter(Boolean);
+ const iv=(pts,g)=>{const out=[];dom.forEach(([lo,hi],pid)=>{const b=[lo,...pts.filter(p=>p>lo+1e-9&&p<hi-1e-9),hi];
+  for(let k=0;k<b.length-1;k++){const l=b[k],r=b[k+1],m=l==-Infinity?(r==Infinity?0:r-1):r==Infinity?l+1:(l+r)/2,d=g(m),s=d>1e-9?1:d<-1e-9?-1:0,z=out[out.length-1];
+   if(z&&z.pid==pid&&z.s==s)z.hi=r;else out.push({lo:l,hi:r,s,pid})}});
+  return out.map(o=>({...o,txt:(closed(o.lo)?'[':'(')+fx(o.lo)+', '+fx(o.hi)+(closed(o.hi)?']':')')}))};
+ let par='';{let ev_=1,od=1,c=0;for(const t of[.7,1.3,2.9,4.1]){const a=F(t),b=F(-t);if(ok(a)&&ok(b)){c++;if(Math.abs(a-b)>1e-9*(1+Math.abs(a)))ev_=0;if(Math.abs(a+b)>1e-9*(1+Math.abs(a)))od=0}}
+  par=!c?'nije određena':ev_&&od?'parna i neparna (f=0)':ev_?'parna':od?'neparna':'ni parna ni neparna'}
+ const y0=F(0);
+ return{F,g1,g2,f1:mh(f1),f2:mh(f2),fh:mh(f),domS,zeros,y0,par,va,ha:ha.map(o=>({...o,txt:lin(o.a)})),mono:iv(crit,g1),ext:ext.map(([t,c])=>[t,c,F(c)]),conv:iv(infl,g2),infl:infl.map(c=>[c,F(c)])}}
+/* ---------- prikaz ---------- */
+function show(r){
+ const o={dom:$('o1').checked,mono:$('o2').checked,conv:$('o3').checked,asym:$('o4').checked};
+ const L=a=>a.length?a.join('<br>'):'nema',cards=[];
+ const card=(t,b)=>cards.push(`<section class="card"><h2>${t}</h2><p class="m">${b}</p></section>`);
+ if(o.dom)card('Domen, nule, parnost',`Domen: ${r.domS}<br>Parnost: ${r.par}<br>Presjek sa y-osom: ${ok(r.y0)?pt(0,r.y0):'ne postoji'}<br>Nule: ${r.zeros.length?r.zeros.map(z=>'x = '+fx(z)).join(', '):'nema'}`);
+ if(o.mono)card('Monotonost i ekstremi',`f′(x) = ${r.f1}<br>${L(r.mono.map(m=>`${m.txt}: ${m.s>0?'↗ raste':m.s<0?'↘ opada':'konstantna'}`))}<br><br>Ekstremi: ${r.ext.length?'<br>'+r.ext.map(e=>`${e[0]} ${pt(e[1],e[2])}`).join('<br>'):'nema'}`);
+ if(o.conv)card('Konveksnost i prevojne tačke',`f″(x) = ${r.f2}<br>${L(r.conv.map(m=>`${m.txt}: ${m.s>0?'∪ konveksna (f″>0)':m.s<0?'∩ konkavna (f″<0)':'linearna'}`))}<br><br>Prevojne tačke: ${r.infl.length?'<br>'+r.infl.map(p=>pt(p[0],p[1])).join('<br>'):'nema'}`);
+ if(o.asym){const sg=v=>v>0?'+∞':'-∞';
+  card('Asimptote',`Vertikalne: ${r.va.length?'<br>'+r.va.map(v=>`x = ${fx(v.a)} (`+[v.L?'lijevo → '+sg(v.L):'',v.R?'desno → '+sg(v.R):''].filter(Boolean).join(', ')+')').join('<br>'):'nema'}<br>Horizontalne i kose: ${r.ha.length?'<br>'+r.ha.map(a=>`${a.txt} (${a.t})`).join('<br>'):'nema'}`)}
+ $('pv').innerHTML='f(x) = '+r.fh;$('out').innerHTML=cards.join('');draw(r,o)}
+function draw(r,o){
+ const c=$('cv'),d=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*d;c.height=h*d;const g=c.getContext('2d');g.scale(d,d);
+ const cs=getComputedStyle(document.documentElement),col=k=>cs.getPropertyValue(k).trim();
+ let xa=parseFloat($('ax').value),xb=parseFloat($('bx').value);if(!(xa<xb)){xa=-10;xb=10}
+ const M=Math.min(3000,Math.round(w*2)),xs=[],v=[];for(let i=0;i<=M;i++){const x=xa+(xb-xa)*i/M;xs.push(x);v.push(r.F(x))}
+ let ya=parseFloat($('ay').value),yb=parseFloat($('by').value);
+ if(!(ya<yb)){const a=v.filter(ok).sort((p,q)=>p-q);if(a.length){let lo=a[Math.floor(a.length*.01)],hi=a[Math.ceil(a.length*.99)-1];if(hi-lo<1e-9){lo-=1;hi+=1}const p=(hi-lo)*.15;ya=lo-p;yb=hi+p}else{ya=-10;yb=10}}
+ const X=x=>(x-xa)/(xb-xa)*w,Y=y=>Math.max(-1e5,Math.min(1e5,h-(y-ya)/(yb-ya)*h));
+ const st=q=>{const p=Math.pow(10,Math.floor(Math.log10(q/5))),m=q/5/p;return(m<1.5?1:m<3.5?2:m<7.5?5:10)*p};
+ g.font='11px system-ui,sans-serif';g.lineWidth=1;g.fillStyle=col('--mu');
+ for(const[lo,hi,hz]of[[xa,xb,0],[ya,yb,1]]){const s=st(hi-lo);for(let t=Math.ceil(lo/s)*s;t<=hi+s/1e6;t+=s){g.strokeStyle=col('--grid');g.beginPath();
+  if(!hz){g.moveTo(X(t),0);g.lineTo(X(t),h)}else{g.moveTo(0,Y(t));g.lineTo(w,Y(t))}g.stroke();
+  const tx=String(+t.toFixed(8));if(Math.abs(t)<s/1e3)continue;
+  if(!hz)g.fillText(tx,X(t)+2,Math.max(12,Math.min(h-4,Y(0)+12)));else g.fillText(tx,Math.max(2,Math.min(w-30,X(0)+4)),Y(t)-3)}}
+ g.strokeStyle=col('--mu');g.lineWidth=1.4;g.beginPath();g.moveTo(X(0),0);g.lineTo(X(0),h);g.moveTo(0,Y(0));g.lineTo(w,Y(0));g.stroke();
+ g.save();g.beginPath();g.rect(0,0,w,h);g.clip();
+ const pl=(vals,cl,lw)=>{g.strokeStyle=cl;g.lineWidth=lw;g.beginPath();let pen=false,py=0;for(let i=0;i<=M;i++){const y=vals[i];if(!ok(y)){pen=false;continue}const yy=Y(y);if(pen&&Math.abs(yy-py)>h*1.2)pen=false;if(pen)g.lineTo(X(xs[i]),yy);else g.moveTo(X(xs[i]),yy);pen=true;py=yy}g.stroke()};
+ if(o.asym){g.setLineDash([6,5]);g.strokeStyle=col('--mu');g.lineWidth=1.3;
+  r.va.forEach(a=>{g.beginPath();g.moveTo(X(a.a),0);g.lineTo(X(a.a),h);g.stroke()});
+  r.ha.forEach(a=>{g.beginPath();g.moveTo(X(xa),Y(a.a.k*xa+a.a.n));g.lineTo(X(xb),Y(a.a.k*xb+a.a.n));g.stroke()});g.setLineDash([])}
+ if($('d2').checked)pl(xs.map(r.g2),col('--c3'),1.5);
+ if($('d1').checked)pl(xs.map(r.g1),col('--c2'),1.5);
+ pl(v,col('--ac'),2.4);
+ const dot=(x,y,cl)=>{if(!ok(y))return;g.fillStyle=cl;g.strokeStyle=col('--card');g.lineWidth=2;g.beginPath();g.arc(X(x),Y(y),4.5,0,7);g.fill();g.stroke()};
+ if(o.dom)r.zeros.forEach(z=>dot(z,0,col('--ac')));
+ if(o.mono)r.ext.forEach(e=>dot(e[1],e[2],col('--c2')));
+ if(o.conv)r.infl.forEach(p=>dot(p[0],p[1],col('--c3')));
+ g.restore()}
+/* ---------- događaji ---------- */
+function run(){try{const r=analyze($('fx').value);$('err').textContent='';show(r)}catch(e){$('err').textContent='⚠ '+e.message}}
+let tm;const later=()=>{clearTimeout(tm);tm=setTimeout(run,250)};
+document.querySelectorAll('input').forEach(i=>i.addEventListener(i.type=='checkbox'?'change':'input',later));
+$('all').onclick=()=>{['o1','o2','o3','o4'].forEach(i=>$(i).checked=true);run()};
+addEventListener('resize',later);
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',run);
+function ins(t,back=0,frac=0){const i=$('fx'),a=i.selectionStart,b=i.selectionEnd,sel=i.value.slice(a,b);
+ if(frac&&sel){t='('+sel+')/()';back=1}
+ i.value=i.value.slice(0,a)+t+i.value.slice(b);const c=a+t.length-back;i.focus();i.setSelectionRange(c,c);run()}
+run();
+</script>
+</body>
+</html>
